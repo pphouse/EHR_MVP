@@ -1,0 +1,260 @@
+{
+  "config": {
+    "configFile": "/home/azureuser/EHR/mvp/e2e-tests/playwright.config.js",
+    "rootDir": "/home/azureuser/EHR/mvp/e2e-tests/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/azureuser/EHR/mvp/e2e-tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/azureuser/EHR/mvp/e2e-tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.53.1",
+    "workers": 1,
+    "webServer": {
+      "command": "echo \"Assuming server is already running\"",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true,
+      "timeout": 5000
+    }
+  },
+  "suites": [
+    {
+      "title": "encounter-edit-test.spec.js",
+      "file": "encounter-edit-test.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "should edit and save SOAP notes successfully",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 14309,
+                  "error": {
+                    "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <textarea readonly tabindex=\"-1\" aria-hidden=\"true\" class=\"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputMultiline css-u36398\"></textarea>\u001b[22m\n\u001b[2m    - fill(\"Updated objective findings - 2025-06-22T06:08:18.992Z\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    20 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying fill action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+                    "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <textarea readonly tabindex=\"-1\" aria-hidden=\"true\" class=\"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputMultiline css-u36398\"></textarea>\u001b[22m\n\u001b[2m    - fill(\"Updated objective findings - 2025-06-22T06:08:18.992Z\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    20 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying fill action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /home/azureuser/EHR/mvp/e2e-tests/tests/encounter-edit-test.spec.js:98:34",
+                    "location": {
+                      "file": "/home/azureuser/EHR/mvp/e2e-tests/tests/encounter-edit-test.spec.js",
+                      "column": 34,
+                      "line": 98
+                    },
+                    "snippet": "   96 |         if (textareaCount >= 4) {\n   97 |           await textareas.nth(0).fill(newSubjectiveText); // Subjective\n>  98 |           await textareas.nth(1).fill(newObjectiveText);  // Objective\n      |                                  ^\n   99 |           await textareas.nth(2).fill(newAssessmentText); // Assessment\n  100 |           await textareas.nth(3).fill(newPlanText);       // Plan\n  101 |           "
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/azureuser/EHR/mvp/e2e-tests/tests/encounter-edit-test.spec.js",
+                        "column": 34,
+                        "line": 98
+                      },
+                      "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <textarea readonly tabindex=\"-1\" aria-hidden=\"true\" class=\"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputMultiline css-u36398\"></textarea>\u001b[22m\n\u001b[2m    - fill(\"Updated objective findings - 2025-06-22T06:08:18.992Z\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    20 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying fill action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n   96 |         if (textareaCount >= 4) {\n   97 |           await textareas.nth(0).fill(newSubjectiveText); // Subjective\n>  98 |           await textareas.nth(1).fill(newObjectiveText);  // Objective\n      |                                  ^\n   99 |           await textareas.nth(2).fill(newAssessmentText); // Assessment\n  100 |           await textareas.nth(3).fill(newPlanText);       // Plan\n  101 |           \n    at /home/azureuser/EHR/mvp/e2e-tests/tests/encounter-edit-test.spec.js:98:34"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "NETWORK: 200 http://localhost:3000/api/v1/encounters/\n"
+                    },
+                    {
+                      "text": "Found 3 encounters\n"
+                    },
+                    {
+                      "text": "BROWSER: Fetching encounter with ID: 3\n"
+                    },
+                    {
+                      "text": "NETWORK: 200 http://localhost:3000/api/v1/encounters/3\n"
+                    },
+                    {
+                      "text": "BROWSER: Encounter data received: {patient_id: 3, practitioner_id: 2, status: finished, encounter_class: ambulatory, start_time: 2025-06-21T14:00:00Z}\n"
+                    },
+                    {
+                      "text": "BROWSER: Fetching patient with ID: 3\n"
+                    },
+                    {
+                      "text": "NETWORK: 200 http://localhost:3000/api/v1/patients/3\n"
+                    },
+                    {
+                      "text": "BROWSER: Patient data received: {first_name: 花子, last_name: 佐藤, first_name_kana: ハナコ, last_name_kana: サトウ, date_of_birth: 1985-08-22}\n"
+                    },
+                    {
+                      "text": "SUCCESS: Encounter detail page loaded without errors\n"
+                    },
+                    {
+                      "text": "SUCCESS: Edit button found\n"
+                    },
+                    {
+                      "text": "Original subjective content: 3日前から咳と鼻水。熱はない。食欲は普通。\n"
+                    },
+                    {
+                      "text": "SUCCESS: Edit mode activated\n"
+                    },
+                    {
+                      "text": "Found 8 textareas\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-06-22T06:08:14.842Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-5e02c-ave-SOAP-notes-successfully-chromium/test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-5e02c-ave-SOAP-notes-successfully-chromium/video.webm"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-5e02c-ave-SOAP-notes-successfully-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-5e02c-ave-SOAP-notes-successfully-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/azureuser/EHR/mvp/e2e-tests/tests/encounter-edit-test.spec.js",
+                    "column": 34,
+                    "line": 98
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "fd143c7d7c0f958d38d1-5fec9269fca8b9fd9d69",
+          "file": "encounter-edit-test.spec.js",
+          "line": 12,
+          "column": 5
+        },
+        {
+          "title": "should handle edit mode correctly",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4245,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "SUCCESS: Edit mode toggle works correctly\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-06-22T06:08:30.061Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-handle-edit-mode-correctly-chromium/test-finished-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-handle-edit-mode-correctly-chromium/video.webm"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-handle-edit-mode-correctly-chromium/trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "fd143c7d7c0f958d38d1-c540d0023bbe4c476846",
+          "file": "encounter-edit-test.spec.js",
+          "line": 144,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-06-22T06:08:14.200Z",
+    "duration": 20336.432,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

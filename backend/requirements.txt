@@ -1,0 +1,21 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+sqlalchemy==2.0.23
+alembic==1.12.1
+psycopg2-binary==2.9.9
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+pydantic[email]>=1.10.0,<3.0.0
+pydantic-settings==2.1.0
+email-validator==2.1.0
+python-dotenv==1.0.0
+redis==5.0.1
+celery==5.3.4
+azure-identity==1.15.0
+azure-storage-blob==12.19.0
+azure-keyvault-secrets==4.7.0
+# fhir.resources==7.0.2  # Temporarily disabled due to Pydantic v2 compatibility
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
