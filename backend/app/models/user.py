@@ -34,6 +34,7 @@ class User(Base):
     
     # Relationships
     encounters = relationship("Encounter", back_populates="practitioner")
+    prescriptions = relationship("Prescription", back_populates="prescriber")
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', role='{self.role.value}')>"

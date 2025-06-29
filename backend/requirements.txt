@@ -15,7 +15,7 @@ celery==5.3.4
 azure-identity==1.15.0
 azure-storage-blob==12.19.0
 azure-keyvault-secrets==4.7.0
-# fhir.resources==7.0.2  # Temporarily disabled due to Pydantic v2 compatibility
+fhir.resources==7.0.2
 pytest==7.4.3
 pytest-asyncio==0.21.1
 httpx==0.25.2

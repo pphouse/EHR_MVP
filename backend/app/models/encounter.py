@@ -72,6 +72,7 @@ class Encounter(Base):
     # Relationships
     patient = relationship("Patient", back_populates="encounters")
     practitioner = relationship("User", back_populates="encounters")
+    prescriptions = relationship("Prescription", back_populates="encounter", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Encounter(id={self.id}, encounter_id='{self.encounter_id}', patient_id={self.patient_id})>"

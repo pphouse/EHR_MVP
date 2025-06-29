@@ -60,6 +60,7 @@ class Patient(Base):
     
     # Relationships
     encounters = relationship("Encounter", back_populates="patient")
+    prescriptions = relationship("Prescription", back_populates="patient")
     
     def __repr__(self):
         return f"<Patient(id={self.id}, patient_id='{self.patient_id}', name='{self.last_name} {self.first_name}')>"
