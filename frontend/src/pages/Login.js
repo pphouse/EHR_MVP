@@ -21,10 +21,12 @@ import {
 } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotificationSound } from '../hooks/useNotificationSound';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, error, loading } = useAuth();
+  const { playLogin, playError } = useNotificationSound();
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
 
@@ -39,8 +41,10 @@ const Login = () => {
     const result = await login(data);
     
     if (result.success) {
+      playLogin();
       navigate('/dashboard');
     } else {
+      playError();
       setLoginError(result.error);
     }
   };

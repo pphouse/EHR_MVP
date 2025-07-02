@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -32,6 +32,7 @@ import {
   CalendarToday,
   Assignment,
 } from '@mui/icons-material';
+import { patientsAPI, handleAPIError } from '../services/api';
 
 // Sample data - in real app, this would come from API
 const samplePatients = [
@@ -75,10 +76,46 @@ const samplePatients = [
 
 const Patients = () => {
   const navigate = useNavigate();
-  const [patients] = useState(samplePatients);
+  const location = useLocation();
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // 患者データを取得する関数
+  const fetchPatients = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await patientsAPI.getPatients();
+      console.log('Patients API response:', response.data);
+      setPatients(response.data || []);
+    } catch (err) {
+      console.error('Error fetching patients:', err);
+      const errorData = handleAPIError(err);
+      setError(errorData.message);
+      
+      // フォールバック: エラーの場合はサンプルデータを使用
+      console.log('フォールバック: サンプルデータを使用します');
+      setPatients(samplePatients);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // コンポーネントマウント時にデータを取得
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  // location が変わった時にデータを再取得（患者登録後に戻ってきた場合など）
+  useEffect(() => {
+    if (location.pathname === '/patients') {
+      fetchPatients();
+    }
+  }, [location]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -141,8 +178,7 @@ const Patients = () => {
   };
 
   const handleAddPatient = () => {
-    // In real app, this would navigate to add patient form
-    console.log('Add new patient');
+    navigate('/patients/create');
   };
 
   return (

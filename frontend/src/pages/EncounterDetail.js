@@ -89,7 +89,13 @@ const EncounterDetail = () => {
       
       console.log('Fetching encounter with ID:', id);
       
-      const response = await encountersAPI.getEncounter(id);
+      // IDを数値に変換してAPIに渡す
+      const numericId = parseInt(id, 10);
+      if (isNaN(numericId)) {
+        throw new Error('Invalid encounter ID');
+      }
+      
+      const response = await encountersAPI.getEncounter(numericId);
       const encData = response.data;
       console.log('Encounter data received:', encData);
       

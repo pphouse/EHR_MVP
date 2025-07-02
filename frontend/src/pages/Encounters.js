@@ -35,9 +35,11 @@ import {
   Person,
   CalendarToday,
   FilterList,
+  Description,
 } from '@mui/icons-material';
 import { encountersAPI, handleAPIError } from '../services/api';
 import { CircularProgress, Alert } from '@mui/material';
+import DischargeSummaryGenerator from '../components/DischargeSummaryGenerator';
 
 // Sample data - in real app, this would come from API
 const sampleEncounters = [
@@ -100,6 +102,8 @@ const Encounters = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [showSummaryGenerator, setShowSummaryGenerator] = useState(false);
+  const [selectedEncounter, setSelectedEncounter] = useState(null);
 
   useEffect(() => {
     fetchEncounters();
@@ -108,8 +112,53 @@ const Encounters = () => {
   const fetchEncounters = async () => {
     try {
       setLoading(true);
-      const response = await encountersAPI.getEncounters();
-      setEncounters(response.data);
+      // Try API first, fallback to sample data + local storage
+      try {
+        const response = await encountersAPI.getEncounters();
+        const apiEncounters = response.data || [];
+        
+        // Get mock encounters from localStorage
+        const mockEncounters = JSON.parse(localStorage.getItem('mockEncounters') || '[]');
+        
+        // Format mock encounters to match expected structure
+        const formattedMockEncounters = mockEncounters.map(encounter => ({
+          ...encounter,
+          patient_name: encounter.patient_name || '作成済み患者',
+          patient_number: encounter.patient_number || `P${encounter.patient_id}`,
+          practitioner_name: 'Demo User',
+          status: encounter.status || 'planned',
+          encounter_class: encounter.encounter_class || 'ambulatory'
+        }));
+        
+        // Combine API data with mock data
+        const combinedEncounters = [...apiEncounters, ...formattedMockEncounters];
+        setEncounters(combinedEncounters);
+        
+        if (combinedEncounters.length > apiEncounters.length) {
+          console.log(`Loaded ${apiEncounters.length} from API and ${formattedMockEncounters.length} from local storage`);
+        }
+      } catch (apiError) {
+        console.log('API not available, using sample data + local storage');
+        
+        // Get mock encounters from localStorage
+        const mockEncounters = JSON.parse(localStorage.getItem('mockEncounters') || '[]');
+        
+        // Format mock encounters
+        const formattedMockEncounters = mockEncounters.map(encounter => ({
+          ...encounter,
+          patient_name: encounter.patient_name || '作成済み患者',
+          patient_number: encounter.patient_number || `P${encounter.patient_id}`,
+          practitioner_name: 'Demo User',
+          status: encounter.status || 'planned',
+          encounter_class: encounter.encounter_class || 'ambulatory'
+        }));
+        
+        // Combine sample data with mock data
+        const combinedEncounters = [...sampleEncounters, ...formattedMockEncounters];
+        setEncounters(combinedEncounters);
+        
+        console.log(`Using ${sampleEncounters.length} sample encounters and ${formattedMockEncounters.length} mock encounters`);
+      }
     } catch (err) {
       const errorData = handleAPIError(err);
       setError(errorData.message);
@@ -187,6 +236,16 @@ const Encounters = () => {
 
   const handleViewEncounter = (encounterId) => {
     navigate(`/encounters/${encounterId}`);
+  };
+
+  const handleGenerateSummary = (encounter) => {
+    setSelectedEncounter(encounter);
+    setShowSummaryGenerator(true);
+  };
+
+  const handleSummaryGenerated = (summaryData) => {
+    console.log('Summary generated for encounter:', selectedEncounter?.id, summaryData);
+    // Could save to encounter or show success message
   };
 
   const handleAddEncounter = () => {
@@ -397,6 +456,15 @@ const Encounters = () => {
                       >
                         <Edit />
                       </IconButton>
+                      {encounter.status === 'finished' && (
+                        <IconButton
+                          color="info"
+                          onClick={() => handleGenerateSummary(encounter)}
+                          title="退院サマリー生成"
+                        >
+                          <Description />
+                        </IconButton>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
@@ -419,6 +487,34 @@ const Encounters = () => {
           }
         />
       </Card>
+
+      {/* Discharge Summary Generator */}
+      {showSummaryGenerator && selectedEncounter && (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            退院サマリー生成 - {selectedEncounter.encounter_id}
+          </Typography>
+          <Button 
+            variant="outlined" 
+            onClick={() => setShowSummaryGenerator(false)}
+            sx={{ mb: 2 }}
+          >
+            閉じる
+          </Button>
+          <DischargeSummaryGenerator
+            encounterId={selectedEncounter.id}
+            encounterData={{
+              chief_complaint: selectedEncounter.chief_complaint,
+              assessment: selectedEncounter.assessment,
+              history_present_illness: selectedEncounter.history_present_illness,
+              physical_examination: selectedEncounter.physical_examination,
+              plan: selectedEncounter.plan,
+              notes: selectedEncounter.notes
+            }}
+            onSummaryGenerated={handleSummaryGenerated}
+          />
+        </Box>
+      )}
 
       {/* Floating Action Button */}
       <Fab

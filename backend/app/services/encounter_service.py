@@ -20,28 +20,53 @@ class EncounterService:
         self.db = db
 
     def generate_encounter_id(self) -> str:
-        """Generate unique encounter ID"""
-        # Get the latest encounter ID and increment
-        last_encounter = (
-            self.db.query(Encounter)
-            .order_by(Encounter.id.desc())
-            .first()
-        )
+        """Generate unique encounter ID with robust format handling"""
+        import uuid
         
-        if last_encounter and last_encounter.encounter_id:
-            try:
-                # Extract number from encounter ID (assuming format E000001)
-                last_number = int(last_encounter.encounter_id[1:])
-                new_number = last_number + 1
-            except (ValueError, IndexError):
+        # Try multiple times to generate a unique ID
+        for attempt in range(10):
+            # Get all existing encounter IDs that start with 'E'
+            last_encounter = (
+                self.db.query(Encounter)
+                .filter(Encounter.encounter_id.like("E%"))
+                .order_by(Encounter.id.desc())
+                .first()
+            )
+            
+            if last_encounter and last_encounter.encounter_id:
+                try:
+                    # Extract numeric part from various formats: E000001, E001-001, etc.
+                    encounter_id_str = last_encounter.encounter_id
+                    if encounter_id_str.startswith("E"):
+                        # Get all digits from the string (handles both E000001 and E001-001)
+                        numeric_part = ''.join(filter(str.isdigit, encounter_id_str[1:]))
+                        if numeric_part:
+                            new_number = int(numeric_part) + 1
+                        else:
+                            new_number = 1
+                    else:
+                        new_number = 1
+                except (ValueError, IndexError):
+                    new_number = 1
+            else:
                 new_number = 1
-        else:
-            new_number = 1
+            
+            # Generate new encounter ID
+            new_encounter_id = f"E{new_number:06d}"
+            
+            # Check if this ID already exists (double-check for uniqueness)
+            existing = self.db.query(Encounter).filter(
+                Encounter.encounter_id == new_encounter_id
+            ).first()
+            
+            if not existing:
+                return new_encounter_id
         
-        return f"E{new_number:06d}"
+        # If we still can't generate a unique ID after 10 attempts, use UUID fallback
+        return f"E{uuid.uuid4().hex[:6].upper()}"
 
     def create_encounter(self, encounter_create: EncounterCreate) -> Encounter:
-        """Create a new encounter"""
+        """Create a new encounter with retry logic for ID conflicts"""
         # Verify patient exists
         patient = self.db.query(Patient).filter(
             Patient.id == encounter_create.patient_id,
@@ -64,41 +89,57 @@ class EncounterService:
                 detail="Practitioner not found"
             )
         
-        # Generate unique encounter ID
-        encounter_id = self.generate_encounter_id()
-        
-        # Create encounter record
-        db_encounter = Encounter(
-            encounter_id=encounter_id,
-            patient_id=encounter_create.patient_id,
-            practitioner_id=encounter_create.practitioner_id,
-            status=encounter_create.status,
-            encounter_class=encounter_create.encounter_class,
-            start_time=encounter_create.start_time,
-            end_time=encounter_create.end_time,
-            subjective=encounter_create.subjective,
-            objective=encounter_create.objective,
-            assessment=encounter_create.assessment,
-            plan=encounter_create.plan,
-            temperature=encounter_create.temperature,
-            blood_pressure_systolic=encounter_create.blood_pressure_systolic,
-            blood_pressure_diastolic=encounter_create.blood_pressure_diastolic,
-            heart_rate=encounter_create.heart_rate,
-            respiratory_rate=encounter_create.respiratory_rate,
-            oxygen_saturation=encounter_create.oxygen_saturation,
-            height=encounter_create.height,
-            weight=encounter_create.weight,
-            chief_complaint=encounter_create.chief_complaint,
-            history_present_illness=encounter_create.history_present_illness,
-            physical_examination=encounter_create.physical_examination,
-            diagnosis_codes=encounter_create.diagnosis_codes,
-            notes=encounter_create.notes
-        )
-        
-        self.db.add(db_encounter)
-        self.db.commit()
-        self.db.refresh(db_encounter)
-        return db_encounter
+        # Retry logic for handling potential ID conflicts
+        max_retries = 3
+        for retry in range(max_retries):
+            try:
+                # Generate unique encounter ID
+                encounter_id = self.generate_encounter_id()
+                
+                # Create encounter record
+                db_encounter = Encounter(
+                    encounter_id=encounter_id,
+                    patient_id=encounter_create.patient_id,
+                    practitioner_id=encounter_create.practitioner_id,
+                    status=encounter_create.status,
+                    encounter_class=encounter_create.encounter_class,
+                    start_time=encounter_create.start_time,
+                    end_time=encounter_create.end_time,
+                    subjective=encounter_create.subjective,
+                    objective=encounter_create.objective,
+                    assessment=encounter_create.assessment,
+                    plan=encounter_create.plan,
+                    temperature=encounter_create.temperature,
+                    blood_pressure_systolic=encounter_create.blood_pressure_systolic,
+                    blood_pressure_diastolic=encounter_create.blood_pressure_diastolic,
+                    heart_rate=encounter_create.heart_rate,
+                    respiratory_rate=encounter_create.respiratory_rate,
+                    oxygen_saturation=encounter_create.oxygen_saturation,
+                    height=encounter_create.height,
+                    weight=encounter_create.weight,
+                    chief_complaint=encounter_create.chief_complaint,
+                    history_present_illness=encounter_create.history_present_illness,
+                    physical_examination=encounter_create.physical_examination,
+                    diagnosis_codes=encounter_create.diagnosis_codes,
+                    notes=encounter_create.notes
+                )
+                
+                self.db.add(db_encounter)
+                self.db.commit()
+                self.db.refresh(db_encounter)
+                return db_encounter
+                
+            except Exception as e:
+                self.db.rollback()
+                if "UNIQUE constraint failed" in str(e) and retry < max_retries - 1:
+                    # Retry with a new ID if unique constraint failed
+                    continue
+                else:
+                    # If it's not a unique constraint error or we've exhausted retries
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Failed to create encounter: {str(e)}"
+                    )
 
     def get_encounter(self, encounter_id: int) -> Optional[Encounter]:
         """Get encounter by ID"""
