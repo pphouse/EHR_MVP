@@ -27,6 +27,7 @@ import {
   Logout,
   LocalHospital,
   Settings,
+  LocalPharmacy,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -47,6 +48,11 @@ const menuItems = [
     text: '診療記録',
     icon: <Assignment />,
     path: '/encounters',
+  },
+  {
+    text: '処方箋管理',
+    icon: <LocalPharmacy />,
+    path: '/prescriptions',
   },
 ];
 

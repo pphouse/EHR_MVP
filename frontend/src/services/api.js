@@ -49,10 +49,10 @@ export const authAPI = {
 
 // Patients API
 export const patientsAPI = {
-  getPatients: (params) => api.get('/patients', { params }),
+  getPatients: (params) => api.get('/patients/', { params }),
   getPatient: (id) => api.get(`/patients/${id}`),
   getPatientByPatientId: (patientId) => api.get(`/patients/by-patient-id/${patientId}`),
-  createPatient: (patientData) => api.post('/patients', patientData),
+  createPatient: (patientData) => api.post('/patients/', patientData),
   updatePatient: (id, patientData) => api.put(`/patients/${id}`, patientData),
   deletePatient: (id) => api.delete(`/patients/${id}`),
   getPatientsCount: (params) => api.get('/patients/search/count', { params }),
@@ -70,6 +70,39 @@ export const encountersAPI = {
   getPatientEncounters: (patientId, params) => api.get(`/encounters/patient/${patientId}`, { params }),
   getPractitionerEncounters: (practitionerId, params) => api.get(`/encounters/practitioner/${practitionerId}`, { params }),
   getEncountersCount: (params) => api.get('/encounters/search/count', { params }),
+};
+
+// Medications API
+export const medicationsAPI = {
+  searchMedications: (params) => api.get('/medications/search', { params }),
+  getMedications: (params) => api.get('/medications/', { params }),
+  getMedication: (id) => api.get(`/medications/${id}`),
+  getMedicationByCode: (code) => api.get(`/medications/code/${code}`),
+  createMedication: (medicationData) => api.post('/medications/', medicationData),
+  updateMedication: (id, medicationData) => api.put(`/medications/${id}`, medicationData),
+  deleteMedication: (id) => api.delete(`/medications/${id}`),
+  getMedicationForms: () => api.get('/medications/forms/list/'),
+  getMedicationCategories: () => api.get('/medications/categories/list/'),
+};
+
+// Prescriptions API
+export const prescriptionsAPI = {
+  getPrescriptions: (params) => api.get('/prescriptions/', { params }),
+  getPrescription: (id) => api.get(`/prescriptions/${id}`),
+  createPrescription: (prescriptionData) => api.post('/prescriptions/', prescriptionData),
+  updatePrescription: (id, prescriptionData) => api.put(`/prescriptions/${id}`, prescriptionData),
+  dispensePrescription: (id, dispensingData) => api.post(`/prescriptions/${id}/dispense`, dispensingData),
+  getPatientPrescriptionHistory: (patientId, params) => api.get(`/prescriptions/patient/${patientId}/history`, { params }),
+  cancelPrescription: (id) => api.delete(`/prescriptions/${id}`),
+};
+
+// AI Assistant API
+export const aiAssistantAPI = {
+  checkSafety: (data) => api.post('/ai-assistant/safety-check', data),
+  assistDiagnosis: (data) => api.post('/ai-assistant/diagnosis-assist', data),
+  generateSummary: (data) => api.post('/ai-assistant/generate-summary', data),
+  getStatus: () => api.get('/ai-assistant/safety-status'),
+  getAuditLogs: (params) => api.get('/ai-assistant/audit-logs', { params }),
 };
 
 // Generic API error handler

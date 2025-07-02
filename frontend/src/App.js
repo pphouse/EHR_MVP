@@ -6,9 +6,13 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Patients from './pages/Patients';
 import PatientDetail from './pages/PatientDetail';
+import PatientCreate from './pages/PatientCreate';
 import Encounters from './pages/Encounters';
 import EncounterDetail from './pages/EncounterDetail';
 import EncounterCreate from './pages/EncounterCreate';
+import Prescriptions from './pages/Prescriptions';
+import PrescriptionCreate from './pages/PrescriptionCreate';
+import NotificationSettings from './components/NotificationSettings';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Protected Route Component
@@ -61,6 +65,15 @@ function App() {
       />
       
       <Route 
+        path="/patients/create" 
+        element={
+          <ProtectedRoute>
+            <PatientCreate />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
         path="/patients/:id" 
         element={
           <ProtectedRoute>
@@ -92,6 +105,33 @@ function App() {
         element={
           <ProtectedRoute>
             <EncounterDetail />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/prescriptions" 
+        element={
+          <ProtectedRoute>
+            <Prescriptions />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/prescriptions/create" 
+        element={
+          <ProtectedRoute>
+            <PrescriptionCreate />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/settings/notifications" 
+        element={
+          <ProtectedRoute>
+            <NotificationSettings />
           </ProtectedRoute>
         } 
       />

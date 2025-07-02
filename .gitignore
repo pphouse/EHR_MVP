@@ -1,0 +1,33 @@
+# Python
+*.pyc
+__pycache__/
+venv/
+backend/venv/
+*.egg-info/
+
+# Logs
+*.log
+backend/backend.log
+
+# Test results and reports
+e2e-tests/playwright-report/
+e2e-tests/test-results/
+e2e-tests/*.png
+
+# Node.js
+node_modules/
+frontend/node_modules/.cache/
+
+# Environment files
+.env.local
+.env.production
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
