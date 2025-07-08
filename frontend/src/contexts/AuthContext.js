@@ -79,16 +79,18 @@ export const AuthProvider = ({ children }) => {
       // Store token
       localStorage.setItem('access_token', access_token);
 
-      // Get user info
-      const userResponse = await authAPI.getCurrentUser();
-      const user = userResponse.data;
+      // Create a basic user object for now
+      const basicUser = {
+        username: credentials.username,
+        is_active: true
+      };
 
       // Store user
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('user', JSON.stringify(basicUser));
 
       dispatch({
         type: AUTH_ACTIONS.SET_USER,
-        payload: user,
+        payload: basicUser,
       });
 
       return { success: true };

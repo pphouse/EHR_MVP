@@ -1,5 +1,4 @@
-from pydantic_settings import BaseSettings
-from pydantic import validator
+from pydantic import BaseSettings, validator
 from typing import List, Optional
 import os
 from pathlib import Path

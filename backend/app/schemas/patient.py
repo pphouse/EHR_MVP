@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, validator
 from typing import Optional
 from datetime import date, datetime
 from ..models.patient import Gender
@@ -27,8 +27,7 @@ class PatientBase(BaseModel):
     medical_history: Optional[str] = None
     notes: Optional[str] = None
 
-    @field_validator('date_of_birth')
-    @classmethod
+    @validator('date_of_birth')
     def validate_date_of_birth(cls, v):
         from datetime import date
         if v > date.today():
@@ -75,7 +74,7 @@ class PatientResponse(PatientBase):
     full_name_kana: Optional[str] = None
     
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class PatientListResponse(BaseModel):
@@ -93,7 +92,7 @@ class PatientListResponse(BaseModel):
     is_active: str
     
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class PatientSearchParams(BaseModel):

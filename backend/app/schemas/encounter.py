@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, validator
 from typing import Optional
 from datetime import datetime
 from ..models.encounter import EncounterStatus, EncounterClass
@@ -29,18 +29,16 @@ class EncounterBase(BaseModel):
     diagnosis_codes: Optional[str] = None
     notes: Optional[str] = None
 
-    @field_validator('end_time')
-    @classmethod
-    def validate_end_time(cls, v, info):
-        if v and 'start_time' in info.data and v < info.data['start_time']:
+    @validator('end_time')
+    def validate_end_time(cls, v, values):
+        if v and 'start_time' in values and v < values['start_time']:
             raise ValueError('End time cannot be before start time')
         return v
 
-    @field_validator('blood_pressure_diastolic')
-    @classmethod
-    def validate_blood_pressure(cls, v, info):
+    @validator('blood_pressure_diastolic')
+    def validate_blood_pressure(cls, v, values):
         if v:
-            systolic = info.data.get('blood_pressure_systolic')
+            systolic = values.get('blood_pressure_systolic')
             if systolic and v >= systolic:
                 raise ValueError('Diastolic pressure must be lower than systolic pressure')
         return v
