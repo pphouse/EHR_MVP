@@ -74,7 +74,7 @@ class PatientResponse(PatientBase):
     full_name_kana: Optional[str] = None
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PatientListResponse(BaseModel):
@@ -92,7 +92,7 @@ class PatientListResponse(BaseModel):
     is_active: str
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PatientSearchParams(BaseModel):

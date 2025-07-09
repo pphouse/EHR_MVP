@@ -9,7 +9,25 @@
 - npm または yarn
 - Git
 
-## 🚀 クイックスタート
+## 🚀 推奨：自動セットアップ（最も簡単）
+
+### macOS/Linux
+```bash
+./start-dev.sh
+```
+
+### Windows
+```cmd
+start-dev.bat
+```
+
+これにより：
+- ✅ 依存関係の自動インストール
+- ✅ Pydantic v2互換性の自動修正
+- ✅ データベースの自動セットアップ
+- ✅ 別々のターミナルでサービスを起動
+
+## 📝 手動セットアップ（詳細な制御が必要な場合）
 
 ### 1. リポジトリのクローン
 
@@ -20,14 +38,22 @@ cd EHR_MVP
 
 ### 2. バックエンドのセットアップ
 
-#### 2.1 Python仮想環境の作成
+#### 方法A: スクリプトを使用（推奨）
+```bash
+cd backend
+./start-backend.sh
+```
+
+#### 方法B: 手動セットアップ
+
+##### 2.1 Python仮想環境の作成
 
 ```bash
 cd backend
 python -m venv venv
 ```
 
-#### 2.2 仮想環境の有効化
+##### 2.2 仮想環境の有効化
 
 **Windows:**
 ```bash
@@ -39,28 +65,21 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-#### 2.3 依存関係のインストール
+##### 2.3 依存関係のインストール
 
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 2.4 環境変数の設定
+##### 2.4 環境変数の設定
 
-```bash
-# .envファイルを作成
-cp .env.example .env  # .env.exampleがない場合は新規作成
-
-# .envファイルを編集
-```
-
-`.env`ファイルの内容例：
+`.env`ファイルを作成：
 ```env
 # Database
 DATABASE_URL=sqlite:///./ehr_mvp.db
 
 # JWT Settings
-SECRET_KEY=your-super-secret-key-change-this-in-production
+SECRET_KEY=dev-secret-key-change-in-production
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
@@ -73,7 +92,21 @@ AZURE_OPENAI_DEPLOYMENT_NAME=your-deployment-name
 FRONTEND_URL=http://localhost:3000
 ```
 
-#### 2.5 データベースのセットアップ
+##### 2.5 Pydantic v2互換性の修正
+
+`app/core/config.py`を編集：
+```python
+# 変更前
+from pydantic import BaseSettings, validator
+
+# 変更後
+from pydantic_settings import BaseSettings
+from pydantic import validator
+```
+
+スキーマファイルの`orm_mode`を`from_attributes`に変更
+
+##### 2.6 データベースのセットアップ
 
 ```bash
 # データベースマイグレーションの実行
@@ -85,7 +118,7 @@ python create_sample_data.py
 python create_sample_medications.py
 ```
 
-#### 2.6 バックエンドの起動
+##### 2.7 バックエンドの起動
 
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -96,15 +129,23 @@ APIドキュメントは http://localhost:8000/docs で確認できます。
 
 ### 3. フロントエンドのセットアップ
 
-新しいターミナルウィンドウを開いて以下を実行：
+新しいターミナルウィンドウを開いて：
 
-#### 3.1 フロントエンドディレクトリへ移動
+#### 方法A: スクリプトを使用（推奨）
+```bash
+cd frontend
+./start-frontend.sh
+```
+
+#### 方法B: 手動セットアップ
+
+##### 3.1 フロントエンドディレクトリへ移動
 
 ```bash
 cd frontend
 ```
 
-#### 3.2 依存関係のインストール
+##### 3.2 依存関係のインストール
 
 ```bash
 npm install
@@ -112,20 +153,16 @@ npm install
 yarn install
 ```
 
-#### 3.3 環境変数の設定
+##### 3.3 環境変数の設定
 
-```bash
-# .envファイルを作成
-cp .env.example .env  # .env.exampleがない場合は新規作成
-```
-
-`.env`ファイルの内容例：
+`.env`ファイルを作成：
 ```env
-REACT_APP_API_URL=http://localhost:8000
-REACT_APP_API_BASE_URL=http://localhost:8000/api/v1
+DANGEROUSLY_DISABLE_HOST_CHECK=true
+SKIP_PREFLIGHT_CHECK=true
+REACT_APP_API_URL=http://localhost:8000/api/v1
 ```
 
-#### 3.4 フロントエンドの起動
+##### 3.4 フロントエンドの起動
 
 ```bash
 npm start
@@ -182,6 +219,36 @@ PORT=3001 npm start
 1. バックエンドの`.env`で`FRONTEND_URL`が正しく設定されているか確認
 2. フロントエンドの`.env`で`REACT_APP_API_URL`が正しく設定されているか確認
 
+### Network Error
+
+「Network error. Please check your connection.」というエラーが表示される場合：
+
+1. **バックエンドが起動しているか確認**
+   ```bash
+   # ポート8000が使用されているか確認
+   lsof -i :8000
+   
+   # バックエンドのログを確認
+   curl http://localhost:8000/docs
+   ```
+
+2. **別々のターミナルで起動**
+   - ターミナル1: `cd backend && ./start-backend.sh`
+   - ターミナル2: `cd frontend && ./start-frontend.sh`
+
+3. **環境変数を確認**
+   ```bash
+   # frontend/.env
+   REACT_APP_API_URL=http://localhost:8000/api/v1
+   ```
+
+4. **Pydanticのバージョン問題**
+   config.pyのインポートを確認：
+   ```python
+   from pydantic_settings import BaseSettings
+   from pydantic import validator
+   ```
+
 ### 依存関係のインストールエラー
 
 **Python:**
@@ -233,6 +300,34 @@ sqlite3 ehr_mvp.db
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
+## 💡 よくある質問
+
+### Q: ポートが既に使用されている
+```bash
+# ポート8000を使用しているプロセスを確認
+lsof -i :8000  # macOS/Linux
+netstat -ano | findstr :8000  # Windows
+
+# プロセスを停止
+kill -9 <PID>  # macOS/Linux
+taskkill /PID <PID> /F  # Windows
+```
+
+### Q: デモユーザーでログインできない
+デモデータを作成していない可能性があります：
+```bash
+cd backend
+source venv/bin/activate  # Windows: venv\Scripts\activate
+python create_demo_user.py
+```
+
+### Q: フロントエンドが真っ白になる
+環境変数が正しく設定されているか確認：
+```bash
+# frontend/.env
+REACT_APP_API_URL=http://localhost:8000/api/v1
+```
+
 ## 🔄 日常的な操作
 
 ### 新しい変更を取り込む
@@ -248,23 +343,43 @@ cd backend
 rm ehr_mvp.db  # SQLiteの場合
 alembic upgrade head
 python create_demo_user.py
+python create_sample_data.py
+python create_sample_medications.py
 ```
 
-### ログのクリア
-```bash
-# バックエンドログ
-rm -rf backend/logs/*
+### サービスの停止
+- 自動起動スクリプト使用時: 各ターミナルウィンドウを閉じる
+- 手動起動時: 各ターミナルで `Ctrl+C`
 
-# フロントエンドビルドキャッシュ
-rm -rf frontend/.cache
-```
+## 📊 ログの確認
+
+### バックエンドログ
+- ターミナルに直接表示
+- エラーは赤色で表示
+
+### フロントエンドログ
+- ブラウザの開発者ツール（F12）→ コンソール
 
 ## 🚀 本番環境へのデプロイ準備
 
-1. 環境変数を本番用に設定
-2. `SECRET_KEY`を安全な値に変更
-3. データベースを本番用に設定（PostgreSQL推奨）
-4. HTTPS証明書の設定
-5. 適切なロギング設定
+1. **環境変数を本番用に設定**
+   - `SECRET_KEY`を安全なランダム値に変更
+   - `DATABASE_URL`を本番データベースに設定
+   - `DEBUG=False`を設定
 
-詳細は[デプロイメントガイド](./DEPLOYMENT.md)を参照してください。
+2. **セキュリティ設定**
+   - HTTPS証明書の設定
+   - CORS設定の見直し
+   - ファイアウォール設定
+
+3. **パフォーマンス最適化**
+   - Gunicornなどの本番用WSGIサーバーを使用
+   - Nginxでリバースプロキシ設定
+   - 静的ファイルの配信最適化
+
+## 🆘 サポート
+
+問題が解決しない場合：
+1. エラーメッセージをコピー
+2. `backend/logs/`のログファイルを確認
+3. GitHubのIssuesで報告

@@ -20,9 +20,33 @@ check_port() {
     fi
 }
 
-# Function to start backend
-start_backend() {
-    echo -e "${YELLOW}Starting Backend Service...${NC}"
+# Function to open new terminal window
+open_new_terminal() {
+    local title=$1
+    local command=$2
+    
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && $command\""
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux with gnome-terminal
+        if command -v gnome-terminal &> /dev/null; then
+            gnome-terminal --title="$title" -- bash -c "cd $(pwd) && $command; exec bash"
+        elif command -v xterm &> /dev/null; then
+            xterm -title "$title" -e bash -c "cd $(pwd) && $command; exec bash" &
+        else
+            echo -e "${RED}No suitable terminal emulator found. Please run manually:${NC}"
+            echo "$command"
+        fi
+    else
+        echo -e "${RED}Unsupported OS. Please run manually:${NC}"
+        echo "$command"
+    fi
+}
+
+# Function to prepare backend
+prepare_backend() {
+    echo -e "${YELLOW}Preparing Backend Service...${NC}"
     
     # Check if backend directory exists
     if [ ! -d "backend" ]; then
@@ -61,8 +85,17 @@ FRONTEND_URL=http://localhost:3000
 EOF
     fi
     
+    # Update config.py imports if needed (Pydantic v2 compatibility)
+    if grep -q "from pydantic import BaseSettings" app/core/config.py 2>/dev/null; then
+        echo "Updating Pydantic imports for v2 compatibility..."
+        sed -i.bak 's/from pydantic import BaseSettings, validator/from pydantic_settings import BaseSettings\nfrom pydantic import validator/' app/core/config.py
+    fi
+    
+    # Update schemas for Pydantic v2 if needed
+    find app/schemas -name "*.py" -type f -exec sed -i.bak 's/orm_mode = True/from_attributes = True/g' {} \;
+    
     # Check if database exists
-    if [ ! -f "ehr_mvp.db" ]; then
+    if [ ! -f "ehr_mvp.db" ] || [ ! -s "ehr_mvp.db" ]; then
         echo "Setting up database..."
         alembic upgrade head
         
@@ -82,24 +115,12 @@ EOF
         fi
     fi
     
-    # Check if port 8000 is available
-    if check_port 8000; then
-        echo -e "${RED}Port 8000 is already in use!${NC}"
-        echo "Please stop the service using port 8000 or use a different port."
-        exit 1
-    fi
-    
-    # Start backend server
-    echo -e "${GREEN}Starting backend server on http://localhost:8000${NC}"
-    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
-    BACKEND_PID=$!
-    
     cd ..
 }
 
-# Function to start frontend
-start_frontend() {
-    echo -e "${YELLOW}Starting Frontend Service...${NC}"
+# Function to prepare frontend
+prepare_frontend() {
+    echo -e "${YELLOW}Preparing Frontend Service...${NC}"
     
     # Check if frontend directory exists
     if [ ! -d "frontend" ]; then
@@ -120,64 +141,61 @@ start_frontend() {
         echo -e "${YELLOW}Warning: .env file not found in frontend directory${NC}"
         echo "Creating .env file with default values..."
         cat > .env << EOF
-REACT_APP_API_URL=http://localhost:8000
-REACT_APP_API_BASE_URL=http://localhost:8000/api/v1
+DANGEROUSLY_DISABLE_HOST_CHECK=true
+SKIP_PREFLIGHT_CHECK=true
+REACT_APP_API_URL=http://localhost:8000/api/v1
 EOF
     fi
     
-    # Check if port 3000 is available
-    if check_port 3000; then
-        echo -e "${RED}Port 3000 is already in use!${NC}"
-        echo "Please stop the service using port 3000 or use a different port."
-        exit 1
-    fi
-    
-    # Start frontend server
-    echo -e "${GREEN}Starting frontend server on http://localhost:3000${NC}"
-    npm start &
-    FRONTEND_PID=$!
-    
     cd ..
 }
-
-# Function to stop services
-stop_services() {
-    echo -e "\n${YELLOW}Stopping services...${NC}"
-    
-    # Kill backend process
-    if [ ! -z "$BACKEND_PID" ]; then
-        kill $BACKEND_PID 2>/dev/null
-        echo "Backend stopped"
-    fi
-    
-    # Kill frontend process
-    if [ ! -z "$FRONTEND_PID" ]; then
-        kill $FRONTEND_PID 2>/dev/null
-        echo "Frontend stopped"
-    fi
-    
-    exit 0
-}
-
-# Set up trap to catch Ctrl+C
-trap stop_services INT
 
 # Main execution
 echo "======================================"
 echo "    EHR MVP Development Environment   "
 echo "======================================"
 
-# Start services
-start_backend
-sleep 5  # Wait for backend to start
+# Check if ports are available
+if check_port 8000; then
+    echo -e "${RED}Port 8000 is already in use!${NC}"
+    echo "Please stop the service using port 8000 or use a different port."
+    exit 1
+fi
 
-start_frontend
+if check_port 3000; then
+    echo -e "${RED}Port 3000 is already in use!${NC}"
+    echo "Please stop the service using port 3000 or use a different port."
+    exit 1
+fi
 
-echo -e "\n${GREEN}Services are starting...${NC}"
+# Prepare services
+prepare_backend
+prepare_frontend
+
+# Start services in new terminal windows
+echo -e "\n${GREEN}Starting services in new terminal windows...${NC}"
+
+# Start backend
+echo -e "${YELLOW}Opening new terminal for Backend...${NC}"
+open_new_terminal "EHR Backend" "./backend/start-backend.sh"
+
+# Wait a bit for backend to start
+echo "Waiting for backend to start..."
+sleep 5
+
+# Start frontend
+echo -e "${YELLOW}Opening new terminal for Frontend...${NC}"
+open_new_terminal "EHR Frontend" "./frontend/start-frontend.sh"
+
+echo -e "\n${GREEN}Services are starting in separate terminals!${NC}"
+echo "======================================"
 echo "Backend API: http://localhost:8000"
 echo "API Docs: http://localhost:8000/docs"
 echo "Frontend: http://localhost:3000"
-echo -e "\nPress Ctrl+C to stop all services"
-
-# Wait for services
-wait
+echo "======================================"
+echo ""
+echo "Demo login credentials (if demo data was created):"
+echo "Username: demo_doctor"
+echo "Password: demo123"
+echo ""
+echo "To stop services, close the terminal windows or press Ctrl+C in each."
