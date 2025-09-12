@@ -48,11 +48,10 @@ class Settings(BaseSettings):
     project_name: str = "EHR MVP"
     version: str = "1.0.0"
     
-    # Azure OpenAI
-    azure_openai_endpoint: Optional[str] = None
-    azure_openai_key: Optional[str] = None
-    azure_openai_version: str = "2024-02-15-preview"
-    azure_openai_deployment_name: Optional[str] = None
+    # Cerebras API
+    cerebras_api_key: Optional[str] = None
+    cerebras_api_url: str = "https://api.cerebras.ai/v1"
+    cerebras_model_name: str = "qwen-3-235b-a22b-instruct-2507"
     
     # AI Assistant Settings
     hallucination_threshold: float = 0.7
@@ -60,35 +59,20 @@ class Settings(BaseSettings):
     enable_auto_rewrite: bool = True
     max_rewrite_attempts: int = 3
     
-    @validator("azure_openai_key", pre=True)
-    def get_azure_openai_key(cls, v):
-        """Azure OpenAI APIキーを ~/.azure/auth.json から読み取る"""
+    @validator("cerebras_api_key", pre=True)
+    def get_cerebras_api_key(cls, v):
+        """Cerebras APIキーを環境変数から読み取る"""
         # 既に有効な値が設定されている場合はそれを使用
-        if v and v != "your-api-key-here":
+        if v:
             return v
         
-        # ~/.azure/auth.json から読み取り
-        azure_auth_path = Path.home() / ".azure" / "auth.json"
-        if azure_auth_path.exists():
-            try:
-                import json
-                with open(azure_auth_path, 'r') as f:
-                    auth_data = json.load(f)
-                    # auth.json 内の azure_openai_key を探す
-                    key = auth_data.get("azure_openai_key") or auth_data.get("AZURE_OPENAI_KEY")
-                    if key:
-                        print(f"Azure OpenAI key loaded from {azure_auth_path}")
-                        return key
-            except Exception as e:
-                print(f"Warning: Could not read Azure OpenAI key from {azure_auth_path}: {e}")
-        
-        # 環境変数から読み取り（フォールバック）
-        env_key = os.environ.get("AZURE_OPENAI_KEY")
-        if env_key and env_key != "your-api-key-here":
-            print("Azure OpenAI key loaded from environment variable")
+        # 環境変数から読み取り
+        env_key = os.environ.get("CEREBRAS_API_KEY")
+        if env_key:
+            print("Cerebras API key loaded from environment variable")
             return env_key
         
-        print("Warning: Azure OpenAI key not found. AI features will use mock data.")
+        print("Warning: Cerebras API key not found. AI features will not be available.")
         return None
     
     class Config:

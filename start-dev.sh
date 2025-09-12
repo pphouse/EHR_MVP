@@ -155,17 +155,50 @@ echo "======================================"
 echo "    EHR MVP Development Environment   "
 echo "======================================"
 
-# Check if ports are available
+# Function to force kill processes on port
+kill_port() {
+    local port=$1
+    local pids=$(lsof -ti:$port 2>/dev/null)
+    
+    if [ ! -z "$pids" ]; then
+        echo -e "${YELLOW}Stopping existing processes on port $port...${NC}"
+        echo "$pids" | xargs kill -9 2>/dev/null
+        sleep 2
+        return 0
+    fi
+    return 1
+}
+
+# Check and clear ports if needed
 if check_port 8000; then
-    echo -e "${RED}Port 8000 is already in use!${NC}"
-    echo "Please stop the service using port 8000 or use a different port."
-    exit 1
+    echo -e "${YELLOW}Port 8000 is in use. Attempting to free it...${NC}"
+    kill_port 8000
+    pkill -f "uvicorn.*app.main" 2>/dev/null
+    sleep 2
+    
+    if check_port 8000; then
+        echo -e "${RED}Unable to free port 8000. Please manually stop the service.${NC}"
+        echo "Run: lsof -i :8000 to see what's using the port"
+        exit 1
+    else
+        echo -e "${GREEN}Port 8000 freed successfully${NC}"
+    fi
 fi
 
 if check_port 3000; then
-    echo -e "${RED}Port 3000 is already in use!${NC}"
-    echo "Please stop the service using port 3000 or use a different port."
-    exit 1
+    echo -e "${YELLOW}Port 3000 is in use. Attempting to free it...${NC}"
+    kill_port 3000
+    pkill -f "react-scripts" 2>/dev/null
+    pkill -f "npm start" 2>/dev/null
+    sleep 2
+    
+    if check_port 3000; then
+        echo -e "${RED}Unable to free port 3000. Please manually stop the service.${NC}"
+        echo "Run: lsof -i :3000 to see what's using the port"
+        exit 1
+    else
+        echo -e "${GREEN}Port 3000 freed successfully${NC}"
+    fi
 fi
 
 # Prepare services

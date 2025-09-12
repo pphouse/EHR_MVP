@@ -33,7 +33,6 @@ class ClinicalValidationRequest(BaseModel):
     patient_summary: str = Field(..., description="AI生成の患者状況整理")
     assessment: str = Field(..., description="医師入力のAssessment")
     plan: str = Field(..., description="医師入力のPlan")
-    diagnosis_codes: Optional[List[str]] = Field(None, description="診断コード")
 
 
 class EnhancedPIIRequest(BaseModel):
@@ -109,8 +108,7 @@ async def validate_clinical_reasoning(
         validation = await service.validate_clinical_reasoning(
             patient_summary=request.patient_summary,
             assessment=request.assessment,
-            plan=request.plan,
-            diagnosis_codes=request.diagnosis_codes
+            plan=request.plan
         )
         
         # ログ記録

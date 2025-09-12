@@ -1,6 +1,6 @@
-import { defineConfig, devices } from '@playwright/test';
+const { defineConfig, devices } = require('@playwright/test');
 
-export default defineConfig({
+module.exports = defineConfig({
   testDir: './tests',
   fullyParallel: false, // Run tests sequentially to avoid conflicts
   forbidOnly: !!process.env.CI,
@@ -27,10 +27,5 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'echo "Assuming server is already running"',
-    url: 'http://localhost:3000',
-    reuseExistingServer: true,
-    timeout: 5000,
-  },
+  webServer: null, // サーバーは既に起動しているため無効化
 });

@@ -10,6 +10,8 @@ import PatientCreate from './pages/PatientCreate';
 import Encounters from './pages/Encounters';
 import EncounterDetail from './pages/EncounterDetail';
 import EncounterCreate from './pages/EncounterCreate';
+import EncounterDetailPatientView from './pages/EncounterDetailPatientView';
+import PatientPortal from './pages/PatientPortal';
 import Prescriptions from './pages/Prescriptions';
 import PrescriptionCreate from './pages/PrescriptionCreate';
 import NotificationSettings from './components/NotificationSettings';
@@ -132,6 +134,25 @@ function App() {
         element={
           <ProtectedRoute>
             <NotificationSettings />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Patient View Routes */}
+      <Route 
+        path="/encounters/:id/patient-view" 
+        element={
+          <ProtectedRoute>
+            <EncounterDetailPatientView />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/patient-portal/:patientId" 
+        element={
+          <ProtectedRoute>
+            <PatientPortal />
           </ProtectedRoute>
         } 
       />

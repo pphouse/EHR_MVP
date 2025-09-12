@@ -1,7 +1,7 @@
 {
   "config": {
-    "configFile": "/home/azureuser/EHR/mvp/e2e-tests/playwright.config.js",
-    "rootDir": "/home/azureuser/EHR/mvp/e2e-tests/tests",
+    "configFile": "/Users/naoto/EHR_MVP/e2e-tests/playwright.config.js",
+    "rootDir": "/Users/naoto/EHR_MVP/e2e-tests/tests",
     "forbidOnly": false,
     "fullyParallel": false,
     "globalSetup": null,
@@ -37,7 +37,7 @@
     "quiet": false,
     "projects": [
       {
-        "outputDir": "/home/azureuser/EHR/mvp/e2e-tests/test-results",
+        "outputDir": "/Users/naoto/EHR_MVP/e2e-tests/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -45,7 +45,7 @@
         },
         "id": "chromium",
         "name": "chromium",
-        "testDir": "/home/azureuser/EHR/mvp/e2e-tests/tests",
+        "testDir": "/Users/naoto/EHR_MVP/e2e-tests/tests",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -58,200 +58,282 @@
     "updateSourceMethod": "patch",
     "version": "1.53.1",
     "workers": 1,
-    "webServer": {
-      "command": "echo \"Assuming server is already running\"",
-      "url": "http://localhost:3000",
-      "reuseExistingServer": true,
-      "timeout": 5000
-    }
+    "webServer": null
   },
   "suites": [
     {
-      "title": "encounter-edit-test.spec.js",
-      "file": "encounter-edit-test.spec.js",
+      "title": "encounter-creation-fix-verification.spec.js",
+      "file": "encounter-creation-fix-verification.spec.js",
       "column": 0,
       "line": 0,
-      "specs": [
+      "specs": [],
+      "suites": [
         {
-          "title": "should edit and save SOAP notes successfully",
-          "ok": false,
-          "tags": [],
-          "tests": [
+          "title": "Encounter Creation Fix Verification",
+          "file": "encounter-creation-fix-verification.spec.js",
+          "line": 8,
+          "column": 6,
+          "specs": [
             {
-              "timeout": 30000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "chromium",
-              "projectName": "chromium",
-              "results": [
+              "title": "Verify Fixed Encounter Creation API",
+              "ok": true,
+              "tags": [],
+              "tests": [
                 {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "failed",
-                  "duration": 14309,
-                  "error": {
-                    "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <textarea readonly tabindex=\"-1\" aria-hidden=\"true\" class=\"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputMultiline css-u36398\"></textarea>\u001b[22m\n\u001b[2m    - fill(\"Updated objective findings - 2025-06-22T06:08:18.992Z\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    20 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying fill action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
-                    "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <textarea readonly tabindex=\"-1\" aria-hidden=\"true\" class=\"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputMultiline css-u36398\"></textarea>\u001b[22m\n\u001b[2m    - fill(\"Updated objective findings - 2025-06-22T06:08:18.992Z\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    20 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying fill action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /home/azureuser/EHR/mvp/e2e-tests/tests/encounter-edit-test.spec.js:98:34",
-                    "location": {
-                      "file": "/home/azureuser/EHR/mvp/e2e-tests/tests/encounter-edit-test.spec.js",
-                      "column": 34,
-                      "line": 98
-                    },
-                    "snippet": "   96 |         if (textareaCount >= 4) {\n   97 |           await textareas.nth(0).fill(newSubjectiveText); // Subjective\n>  98 |           await textareas.nth(1).fill(newObjectiveText);  // Objective\n      |                                  ^\n   99 |           await textareas.nth(2).fill(newAssessmentText); // Assessment\n  100 |           await textareas.nth(3).fill(newPlanText);       // Plan\n  101 |           "
-                  },
-                  "errors": [
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
                     {
-                      "location": {
-                        "file": "/home/azureuser/EHR/mvp/e2e-tests/tests/encounter-edit-test.spec.js",
-                        "column": 34,
-                        "line": 98
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3768,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "=== 修正後の診療記録作成API検証テスト ===\n"
+                        },
+                        {
+                          "text": "✅ 認証成功\n"
+                        },
+                        {
+                          "text": "--- 修正前のデータ確認 ---\n"
+                        },
+                        {
+                          "text": "修正前の診療記録数: 5\n"
+                        },
+                        {
+                          "text": "既存のEncounter ID:\n"
+                        },
+                        {
+                          "text": "  - ID: 2, Encounter ID: E001-001\n"
+                        },
+                        {
+                          "text": "  - ID: 1, Encounter ID: E000001\n"
+                        },
+                        {
+                          "text": "  - ID: 3, Encounter ID: E002-001\n"
+                        },
+                        {
+                          "text": "  - ID: 4, Encounter ID: E003-001\n"
+                        },
+                        {
+                          "text": "  - ID: 5, Encounter ID: E004-001\n"
+                        },
+                        {
+                          "text": "--- 修正後の診療記録作成テスト ---\n"
+                        },
+                        {
+                          "text": "\n--- 佐藤花子の診療記録 作成テスト ---\n"
+                        },
+                        {
+                          "text": "📥 Response Status: 200\n"
+                        },
+                        {
+                          "text": "✅ 診療記録作成成功\n"
+                        },
+                        {
+                          "text": "  - Created ID: 6\n"
+                        },
+                        {
+                          "text": "  - Encounter ID: E004002\n"
+                        },
+                        {
+                          "text": "  - Chief Complaint: 修正テスト: インフルエンザ様症状\n"
+                        },
+                        {
+                          "text": "  - Patient ID: 2\n"
+                        },
+                        {
+                          "text": "\n--- 田中太郎の診療記録 作成テスト ---\n"
+                        },
+                        {
+                          "text": "📥 Response Status: 200\n"
+                        },
+                        {
+                          "text": "✅ 診療記録作成成功\n"
+                        },
+                        {
+                          "text": "  - Created ID: 7\n"
+                        },
+                        {
+                          "text": "  - Encounter ID: E004003\n"
+                        },
+                        {
+                          "text": "  - Chief Complaint: 修正テスト: 胃の不調\n"
+                        },
+                        {
+                          "text": "  - Patient ID: 1\n"
+                        },
+                        {
+                          "text": "\n--- 作成後のデータ確認 ---\n"
+                        },
+                        {
+                          "text": "作成後の診療記録数: 7\n"
+                        },
+                        {
+                          "text": "新規作成された診療記録: 2件\n"
+                        },
+                        {
+                          "text": "  ✅ ID: 6, Encounter ID: E004002, 主訴: 修正テスト: インフルエンザ様症状\n"
+                        },
+                        {
+                          "text": "  ✅ ID: 7, Encounter ID: E004003, 主訴: 修正テスト: 胃の不調\n"
+                        },
+                        {
+                          "text": "=== 修正後の診療記録作成API検証テスト完了 ===\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-07-02T04:41:17.335Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/naoto/EHR_MVP/e2e-tests/test-results/encounter-creation-fix-ver-f75ea-ixed-Encounter-Creation-API-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/naoto/EHR_MVP/e2e-tests/test-results/encounter-creation-fix-ver-f75ea-ixed-Encounter-Creation-API-chromium/video.webm"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/naoto/EHR_MVP/e2e-tests/test-results/encounter-creation-fix-ver-f75ea-ixed-Encounter-Creation-API-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fecabab61d2c9dcd9f89-97149ecc7d87c7ec3680",
+              "file": "encounter-creation-fix-verification.spec.js",
+              "line": 19,
+              "column": 3
+            },
+            {
+              "title": "End-to-End Encounter Creation Flow Test",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 9147,
+                      "error": {
+                        "message": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=E2Eテスト') resolved to 6 elements:\n    1) <h6 class=\"MuiTypography-root MuiTypography-h6 MuiTypography-gutterBottom css-iicnns-MuiTypography-root\">E2Eテスト: インフルエンザ様症状</h6> aka getByRole('heading', { name: 'E2Eテスト: インフルエンザ様症状' })\n    2) <div class=\"MuiAlert-message css-1pxa9xg-MuiAlert-message\">E2Eテスト: インフルエンザ様症状</div> aka locator('#encounter-tabpanel-0').getByText('E2Eテスト: インフルエンザ様症状')\n    3) <textarea rows=\"4\" disabled id=\":r15:\" aria-invalid=\"false\" placeholder=\"患者の訴え、症状、病歴など\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: 発熱、咳嗽</textarea> aka getByRole('textbox', { name: '患者の訴え、症状、病歴など' })\n    4) <textarea rows=\"4\" disabled id=\":r17:\" aria-invalid=\"false\" placeholder=\"身体所見、検査結果、バイタルサインなど\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: 体温38.2℃</textarea> aka getByRole('textbox', { name: '身体所見、検査結果、バイタルサインなど' })\n    5) <textarea rows=\"4\" disabled id=\":r19:\" aria-invalid=\"false\" placeholder=\"診断、病状評価、鑑別診断など\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: インフルエンザ疑い</textarea> aka getByRole('textbox', { name: '診断、病状評価、鑑別診断など' })\n    6) <textarea rows=\"4\" disabled id=\":r1b:\" aria-invalid=\"false\" placeholder=\"治療計画、処方、次回予約など\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: 対症療法</textarea> aka getByRole('textbox', { name: '治療計画、処方、次回予約など' })\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=E2Eテスト')\u001b[22m\n",
+                        "stack": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=E2Eテスト') resolved to 6 elements:\n    1) <h6 class=\"MuiTypography-root MuiTypography-h6 MuiTypography-gutterBottom css-iicnns-MuiTypography-root\">E2Eテスト: インフルエンザ様症状</h6> aka getByRole('heading', { name: 'E2Eテスト: インフルエンザ様症状' })\n    2) <div class=\"MuiAlert-message css-1pxa9xg-MuiAlert-message\">E2Eテスト: インフルエンザ様症状</div> aka locator('#encounter-tabpanel-0').getByText('E2Eテスト: インフルエンザ様症状')\n    3) <textarea rows=\"4\" disabled id=\":r15:\" aria-invalid=\"false\" placeholder=\"患者の訴え、症状、病歴など\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: 発熱、咳嗽</textarea> aka getByRole('textbox', { name: '患者の訴え、症状、病歴など' })\n    4) <textarea rows=\"4\" disabled id=\":r17:\" aria-invalid=\"false\" placeholder=\"身体所見、検査結果、バイタルサインなど\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: 体温38.2℃</textarea> aka getByRole('textbox', { name: '身体所見、検査結果、バイタルサインなど' })\n    5) <textarea rows=\"4\" disabled id=\":r19:\" aria-invalid=\"false\" placeholder=\"診断、病状評価、鑑別診断など\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: インフルエンザ疑い</textarea> aka getByRole('textbox', { name: '診断、病状評価、鑑別診断など' })\n    6) <textarea rows=\"4\" disabled id=\":r1b:\" aria-invalid=\"false\" placeholder=\"治療計画、処方、次回予約など\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: 対症療法</textarea> aka getByRole('textbox', { name: '治療計画、処方、次回予約など' })\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=E2Eテスト')\u001b[22m\n\n    at /Users/naoto/EHR_MVP/e2e-tests/tests/encounter-creation-fix-verification.spec.js:255:47",
+                        "location": {
+                          "file": "/Users/naoto/EHR_MVP/e2e-tests/tests/encounter-creation-fix-verification.spec.js",
+                          "column": 47,
+                          "line": 255
+                        },
+                        "snippet": "  253 |     \n  254 |     // 入力したデータが表示されることを確認\n> 255 |     await expect(page.locator('text=E2Eテスト')).toBeVisible();\n      |                                               ^\n  256 |     console.log('✅ 入力データが正しく表示');\n  257 |\n  258 |     console.log('=== エンドツーエンド診療記録作成フローテスト完了 ===');"
                       },
-                      "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <textarea readonly tabindex=\"-1\" aria-hidden=\"true\" class=\"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputMultiline css-u36398\"></textarea>\u001b[22m\n\u001b[2m    - fill(\"Updated objective findings - 2025-06-22T06:08:18.992Z\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    20 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying fill action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n   96 |         if (textareaCount >= 4) {\n   97 |           await textareas.nth(0).fill(newSubjectiveText); // Subjective\n>  98 |           await textareas.nth(1).fill(newObjectiveText);  // Objective\n      |                                  ^\n   99 |           await textareas.nth(2).fill(newAssessmentText); // Assessment\n  100 |           await textareas.nth(3).fill(newPlanText);       // Plan\n  101 |           \n    at /home/azureuser/EHR/mvp/e2e-tests/tests/encounter-edit-test.spec.js:98:34"
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/naoto/EHR_MVP/e2e-tests/tests/encounter-creation-fix-verification.spec.js",
+                            "column": 47,
+                            "line": 255
+                          },
+                          "message": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=E2Eテスト') resolved to 6 elements:\n    1) <h6 class=\"MuiTypography-root MuiTypography-h6 MuiTypography-gutterBottom css-iicnns-MuiTypography-root\">E2Eテスト: インフルエンザ様症状</h6> aka getByRole('heading', { name: 'E2Eテスト: インフルエンザ様症状' })\n    2) <div class=\"MuiAlert-message css-1pxa9xg-MuiAlert-message\">E2Eテスト: インフルエンザ様症状</div> aka locator('#encounter-tabpanel-0').getByText('E2Eテスト: インフルエンザ様症状')\n    3) <textarea rows=\"4\" disabled id=\":r15:\" aria-invalid=\"false\" placeholder=\"患者の訴え、症状、病歴など\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: 発熱、咳嗽</textarea> aka getByRole('textbox', { name: '患者の訴え、症状、病歴など' })\n    4) <textarea rows=\"4\" disabled id=\":r17:\" aria-invalid=\"false\" placeholder=\"身体所見、検査結果、バイタルサインなど\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: 体温38.2℃</textarea> aka getByRole('textbox', { name: '身体所見、検査結果、バイタルサインなど' })\n    5) <textarea rows=\"4\" disabled id=\":r19:\" aria-invalid=\"false\" placeholder=\"診断、病状評価、鑑別診断など\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: インフルエンザ疑い</textarea> aka getByRole('textbox', { name: '診断、病状評価、鑑別診断など' })\n    6) <textarea rows=\"4\" disabled id=\":r1b:\" aria-invalid=\"false\" placeholder=\"治療計画、処方、次回予約など\" class=\"MuiInputBase-input MuiOutlinedInput-input Mui-disabled MuiInputBase-inputMultiline css-1sqnrkk-MuiInputBase-input-MuiOutlinedInput-input\">E2Eテスト: 対症療法</textarea> aka getByRole('textbox', { name: '治療計画、処方、次回予約など' })\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=E2Eテスト')\u001b[22m\n\n\n  253 |     \n  254 |     // 入力したデータが表示されることを確認\n> 255 |     await expect(page.locator('text=E2Eテスト')).toBeVisible();\n      |                                               ^\n  256 |     console.log('✅ 入力データが正しく表示');\n  257 |\n  258 |     console.log('=== エンドツーエンド診療記録作成フローテスト完了 ===');\n    at /Users/naoto/EHR_MVP/e2e-tests/tests/encounter-creation-fix-verification.spec.js:255:47"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "=== エンドツーエンド診療記録作成フローテスト ===\n"
+                        },
+                        {
+                          "text": "--- 佐藤花子の診療記録作成 ---\n"
+                        },
+                        {
+                          "text": "✅ 佐藤花子を選択\n"
+                        },
+                        {
+                          "text": "💾 診療記録を保存\n"
+                        },
+                        {
+                          "text": "📥 POST Response: 200 http://localhost:8000/api/v1/encounters/\n"
+                        },
+                        {
+                          "text": "✅ Created Encounter ID: E004004\n"
+                        },
+                        {
+                          "text": "✅ 成功メッセージ表示\n"
+                        },
+                        {
+                          "text": "✅ 詳細ページに遷移\n"
+                        },
+                        {
+                          "text": "✅ \"Encounter not found\" エラーなし\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-07-02T04:41:21.494Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/naoto/EHR_MVP/e2e-tests/test-results/encounter-creation-fix-ver-d78a0-ncounter-Creation-Flow-Test-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/naoto/EHR_MVP/e2e-tests/test-results/encounter-creation-fix-ver-d78a0-ncounter-Creation-Flow-Test-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/naoto/EHR_MVP/e2e-tests/test-results/encounter-creation-fix-ver-d78a0-ncounter-Creation-Flow-Test-chromium/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/naoto/EHR_MVP/e2e-tests/test-results/encounter-creation-fix-ver-d78a0-ncounter-Creation-Flow-Test-chromium/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/naoto/EHR_MVP/e2e-tests/tests/encounter-creation-fix-verification.spec.js",
+                        "column": 47,
+                        "line": 255
+                      }
                     }
                   ],
-                  "stdout": [
-                    {
-                      "text": "NETWORK: 200 http://localhost:3000/api/v1/encounters/\n"
-                    },
-                    {
-                      "text": "Found 3 encounters\n"
-                    },
-                    {
-                      "text": "BROWSER: Fetching encounter with ID: 3\n"
-                    },
-                    {
-                      "text": "NETWORK: 200 http://localhost:3000/api/v1/encounters/3\n"
-                    },
-                    {
-                      "text": "BROWSER: Encounter data received: {patient_id: 3, practitioner_id: 2, status: finished, encounter_class: ambulatory, start_time: 2025-06-21T14:00:00Z}\n"
-                    },
-                    {
-                      "text": "BROWSER: Fetching patient with ID: 3\n"
-                    },
-                    {
-                      "text": "NETWORK: 200 http://localhost:3000/api/v1/patients/3\n"
-                    },
-                    {
-                      "text": "BROWSER: Patient data received: {first_name: 花子, last_name: 佐藤, first_name_kana: ハナコ, last_name_kana: サトウ, date_of_birth: 1985-08-22}\n"
-                    },
-                    {
-                      "text": "SUCCESS: Encounter detail page loaded without errors\n"
-                    },
-                    {
-                      "text": "SUCCESS: Edit button found\n"
-                    },
-                    {
-                      "text": "Original subjective content: 3日前から咳と鼻水。熱はない。食欲は普通。\n"
-                    },
-                    {
-                      "text": "SUCCESS: Edit mode activated\n"
-                    },
-                    {
-                      "text": "Found 8 textareas\n"
-                    }
-                  ],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2025-06-22T06:08:14.842Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-5e02c-ave-SOAP-notes-successfully-chromium/test-failed-1.png"
-                    },
-                    {
-                      "name": "video",
-                      "contentType": "video/webm",
-                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-5e02c-ave-SOAP-notes-successfully-chromium/video.webm"
-                    },
-                    {
-                      "name": "error-context",
-                      "contentType": "text/markdown",
-                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-5e02c-ave-SOAP-notes-successfully-chromium/error-context.md"
-                    },
-                    {
-                      "name": "trace",
-                      "contentType": "application/zip",
-                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-5e02c-ave-SOAP-notes-successfully-chromium/trace.zip"
-                    }
-                  ],
-                  "errorLocation": {
-                    "file": "/home/azureuser/EHR/mvp/e2e-tests/tests/encounter-edit-test.spec.js",
-                    "column": 34,
-                    "line": 98
-                  }
+                  "status": "unexpected"
                 }
               ],
-              "status": "unexpected"
+              "id": "fecabab61d2c9dcd9f89-f0f30f1ee992ebc7dabf",
+              "file": "encounter-creation-fix-verification.spec.js",
+              "line": 173,
+              "column": 3
             }
-          ],
-          "id": "fd143c7d7c0f958d38d1-5fec9269fca8b9fd9d69",
-          "file": "encounter-edit-test.spec.js",
-          "line": 12,
-          "column": 5
-        },
-        {
-          "title": "should handle edit mode correctly",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 30000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "chromium",
-              "projectName": "chromium",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 4245,
-                  "errors": [],
-                  "stdout": [
-                    {
-                      "text": "SUCCESS: Edit mode toggle works correctly\n"
-                    }
-                  ],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2025-06-22T06:08:30.061Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-handle-edit-mode-correctly-chromium/test-finished-1.png"
-                    },
-                    {
-                      "name": "video",
-                      "contentType": "video/webm",
-                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-handle-edit-mode-correctly-chromium/video.webm"
-                    },
-                    {
-                      "name": "trace",
-                      "contentType": "application/zip",
-                      "path": "/home/azureuser/EHR/mvp/e2e-tests/test-results/encounter-edit-test-should-handle-edit-mode-correctly-chromium/trace.zip"
-                    }
-                  ]
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "fd143c7d7c0f958d38d1-c540d0023bbe4c476846",
-          "file": "encounter-edit-test.spec.js",
-          "line": 144,
-          "column": 5
+          ]
         }
       ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-06-22T06:08:14.200Z",
-    "duration": 20336.432,
+    "startTime": "2025-07-02T04:41:16.533Z",
+    "duration": 14326.635999999999,
     "expected": 1,
     "skipped": 0,
     "unexpected": 1,

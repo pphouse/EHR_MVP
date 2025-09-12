@@ -5,7 +5,6 @@ const ClinicalValidationChecker = ({
   patientSummary, 
   assessment, 
   plan, 
-  diagnosisCodes = [],
   onValidationResult,
   disabled = false 
 }) => {
@@ -27,7 +26,6 @@ const ClinicalValidationChecker = ({
         patient_summary: patientSummary,
         assessment: assessment,
         plan: plan,
-        diagnosis_codes: diagnosisCodes
       };
 
       const result = await enhancedClinicalAPI.validateClinicalReasoning(validationData);

@@ -34,7 +34,7 @@ import {
   Warning,
   Assignment,
 } from '@mui/icons-material';
-import { aiAssistantAPI, handleAPIError } from '../services/api';
+import { handleAPIError } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 const DischargeSummaryGenerator = ({ encounterId, encounterData, onSummaryGenerated }) => {
@@ -61,36 +61,12 @@ const DischargeSummaryGenerator = ({ encounterId, encounterData, onSummaryGenera
   });
 
   const handleGenerateSummary = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const requestData = {
-        encounter_data: {
-          encounter_id: encounterId,
-          ...encounterInfo
-        },
-        summary_type: options.summary_type,
-        include_medications: options.include_medications
-      };
-
-      console.log('Generating summary with:', requestData);
-
-      const response = await aiAssistantAPI.generateSummary(requestData);
-      
-      setSummary(response.data);
-      
-      if (onSummaryGenerated) {
-        onSummaryGenerated(response.data);
-      }
-
-    } catch (err) {
-      console.error('Summary generation failed:', err);
-      const errorData = handleAPIError(err);
-      setError(errorData.message);
-    } finally {
-      setLoading(false);
-    }
+    // AI Assistant API has been removed
+    setError('退院サマリー生成機能は現在利用できません。');
+    setSummary({
+      summary_text: '手動で退院サマリーを作成してください。',
+      structured_data: {}
+    });
   };
 
   const handleInputChange = (field) => (event) => {

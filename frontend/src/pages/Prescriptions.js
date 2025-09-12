@@ -48,8 +48,6 @@ import {
 import { prescriptionsAPI, handleAPIError } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotificationSound } from '../hooks/useNotificationSound';
-import AIAssistant from '../components/AIAssistant';
-import DiagnosisAssistant from '../components/DiagnosisAssistant';
 
 const Prescriptions = () => {
   const navigate = useNavigate();
@@ -73,7 +71,6 @@ const Prescriptions = () => {
     date_to: '',
   });
 
-  const [showAIAssistant, setShowAIAssistant] = useState(false);
 
   const limit = 20;
 
@@ -216,14 +213,6 @@ const Prescriptions = () => {
           処方箋管理
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<Psychology />}
-            onClick={() => setShowAIAssistant(!showAIAssistant)}
-            color={showAIAssistant ? "primary" : "inherit"}
-          >
-            AI診断補助
-          </Button>
           {(user?.role === 'doctor' || user?.role === 'admin') && (
             <Button
               variant="contained"
@@ -242,28 +231,6 @@ const Prescriptions = () => {
         </Alert>
       )}
 
-      {/* AI Assistant for Diagnosis */}
-      {showAIAssistant && (
-        <Box sx={{ mb: 3 }}>
-          <DiagnosisAssistant 
-            patientContext={{
-              context_type: "prescription_management"
-            }}
-            onDiagnosisGenerated={(diagnosis) => {
-              console.log('Diagnosis generated:', diagnosis);
-            }}
-          />
-          
-          <Box sx={{ mt: 2 }}>
-            <AIAssistant 
-              context={{
-                operation: "prescription_support",
-                context_type: "prescription_management"
-              }}
-            />
-          </Box>
-        </Box>
-      )}
 
       {/* Filters */}
       <Card sx={{ mb: 3 }}>

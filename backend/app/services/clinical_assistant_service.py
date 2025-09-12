@@ -38,7 +38,7 @@ class ClinicalValidation:
 
 
 class ClinicalAssistantService:
-    """Azure OpenAI APIを使用したリアルタイム診療支援サービス"""
+    """Cerebras APIを使用したリアルタイム診療支援サービス"""
     
     def __init__(self):
         self.ai_service = AIAssistantService()
@@ -61,7 +61,7 @@ class ClinicalAssistantService:
             PatientSituation: 生成された患者状況整理
         """
         try:
-            if not self.ai_service.azure_client:
+            if not self.ai_service.cerebras_client:
                 raise Exception("Azure OpenAI client not available")
             
             # 入力データの安全性チェック
@@ -75,8 +75,8 @@ class ClinicalAssistantService:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.ai_service.azure_client.chat.completions.create(
-                model=self.ai_service.deployment_name,
+            response = self.ai_service.cerebras_client.chat.completions.create(
+                model=self.ai_service.cerebras_model_name,
                 messages=messages,
                 max_tokens=1200,
                 temperature=0.2
@@ -189,8 +189,7 @@ class ClinicalAssistantService:
     async def validate_clinical_reasoning(self, 
                                         patient_summary: str, 
                                         assessment: str, 
-                                        plan: str,
-                                        diagnosis_codes: List[str] = None) -> ClinicalValidation:
+                                        plan: str) -> ClinicalValidation:
         """
         A&Pの医学的妥当性チェック
         
@@ -198,13 +197,12 @@ class ClinicalAssistantService:
             patient_summary: AI生成の患者状況整理
             assessment: 医師入力のAssessment
             plan: 医師入力のPlan
-            diagnosis_codes: 診断コードリスト
             
         Returns:
             ClinicalValidation: 整合性チェック結果
         """
         try:
-            if not self.ai_service.azure_client:
+            if not self.ai_service.cerebras_client:
                 raise Exception("Azure OpenAI client not available")
             
             # 入力データの安全性チェック
@@ -214,7 +212,7 @@ class ClinicalAssistantService:
             
             # 整合性チェックプロンプトの生成
             prompt = self._create_validation_prompt(
-                safe_summary, safe_assessment, safe_plan, diagnosis_codes or []
+                safe_summary, safe_assessment, safe_plan
             )
             
             messages = [
@@ -222,8 +220,8 @@ class ClinicalAssistantService:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.ai_service.azure_client.chat.completions.create(
-                model=self.ai_service.deployment_name,
+            response = self.ai_service.cerebras_client.chat.completions.create(
+                model=self.ai_service.cerebras_model_name,
                 messages=messages,
                 max_tokens=1000,
                 temperature=0.1
@@ -254,12 +252,9 @@ class ClinicalAssistantService:
                 validation_summary="自動検証に失敗しました"
             )
     
-    def _create_validation_prompt(self, summary: str, assessment: str, plan: str, diagnosis_codes: List[str]) -> str:
+    def _create_validation_prompt(self, summary: str, assessment: str, plan: str) -> str:
         """A&P整合性チェック用プロンプトを生成"""
         
-        codes_text = ""
-        if diagnosis_codes:
-            codes_text = f"診断コード: {', '.join(diagnosis_codes)}"
         
         return f"""
 以下の臨床情報の整合性を評価してください。
@@ -273,14 +268,12 @@ class ClinicalAssistantService:
 【医師入力のPlan（計画）】:
 {plan}
 
-{codes_text}
 
 【評価観点】:
 1. 状況整理とAssessmentの整合性
 2. AssessmentとPlanの論理的整合性
-3. 診断コードとAssessmentの適合性
-4. Planの医学的妥当性
-5. 重要な見落としの有無
+3. Planの医学的妥当性
+4. 重要な見落としの有無
 
 【出力形式】:
 {{
@@ -288,10 +281,10 @@ class ClinicalAssistantService:
     "consistency_score": 0.0から1.0,
     "inconsistencies": [
         {{
-            "type": "diagnosis_mismatch|treatment_inappropriate|missing_consideration",
+            "type": "treatment_inappropriate|missing_consideration|logic_error",
             "description": "不整合の詳細",
             "severity": "low|medium|high|critical",
-            "location": "assessment|plan|diagnosis_code"
+            "location": "assessment|plan"
         }}
     ],
     "suggestions": [
@@ -365,8 +358,8 @@ class ClinicalAssistantService:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.ai_service.azure_client.chat.completions.create(
-                model=self.ai_service.deployment_name,
+            response = self.ai_service.cerebras_client.chat.completions.create(
+                model=self.ai_service.cerebras_model_name,
                 messages=messages,
                 max_tokens=800,
                 temperature=0.3

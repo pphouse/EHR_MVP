@@ -17,17 +17,19 @@ import {
   Step,
   StepLabel,
   Paper,
+  Chip,
 } from '@mui/material';
 import {
   ArrowBack,
   Save,
   NavigateNext,
   NavigateBefore,
+  CheckCircle,
+  VerifiedUser,
 } from '@mui/icons-material';
 import { encountersAPI, patientsAPI, handleAPIError } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotificationSound } from '../hooks/useNotificationSound';
-import AIAssistant from '../components/AIAssistant';
 import RealTimeClinicalSummary from '../components/RealTimeClinicalSummary';
 import ClinicalValidationChecker from '../components/ClinicalValidationChecker';
 import EnhancedPIIChecker from '../components/EnhancedPIIChecker';
@@ -47,6 +49,7 @@ const EncounterCreate = () => {
   const [clinicalSummary, setClinicalSummary] = useState(null);
   const [validationResult, setValidationResult] = useState(null);
   const [piiResult, setPIIResult] = useState(null);
+  const [physicianConfirmed, setPhysicianConfirmed] = useState(false);
   
   const [encounterData, setEncounterData] = useState({
     patient_id: searchParams.get('patient_id') || '',
@@ -58,7 +61,6 @@ const EncounterCreate = () => {
     chief_complaint: '',
     history_present_illness: '',
     physical_examination: '',
-    diagnosis_codes: '',
     notes: '',
     // Vital signs
     temperature: '',
@@ -139,6 +141,8 @@ const EncounterCreate = () => {
 
   const handleValidationResult = (result) => {
     setValidationResult(result);
+    // Reset physician confirmation when new validation is performed
+    setPhysicianConfirmed(false);
   };
 
   const handlePIIDetected = (result) => {
@@ -177,7 +181,6 @@ const EncounterCreate = () => {
         chief_complaint: encounterData.chief_complaint || null,
         history_present_illness: encounterData.history_present_illness || null,
         physical_examination: encounterData.physical_examination || null,
-        diagnosis_codes: encounterData.diagnosis_codes || null,
         notes: encounterData.notes || null,
         subjective: encounterData.subjective || null,
         objective: encounterData.objective || null,
@@ -471,22 +474,6 @@ const EncounterCreate = () => {
     </Grid>
   );
 
-  const handleAITextProcessed = (result) => {
-    // AI処理結果を適切なフィールドに反映
-    if (result.processed_text) {
-      // 現在のテキストがどのフィールドに対応するかを判定
-      const currentText = encounterData.subjective || encounterData.objective || encounterData.assessment || encounterData.plan;
-      if (currentText === encounterData.subjective) {
-        setEncounterData(prev => ({...prev, subjective: result.processed_text}));
-      } else if (currentText === encounterData.objective) {
-        setEncounterData(prev => ({...prev, objective: result.processed_text}));
-      } else if (currentText === encounterData.assessment) {
-        setEncounterData(prev => ({...prev, assessment: result.processed_text}));
-      } else if (currentText === encounterData.plan) {
-        setEncounterData(prev => ({...prev, plan: result.processed_text}));
-      }
-    }
-  };
 
   const renderSOAPNotes = () => (
     <Grid container spacing={3}>
@@ -496,17 +483,6 @@ const EncounterCreate = () => {
         </Typography>
       </Grid>
 
-      {/* AI Assistant Integration */}
-      <Grid item xs={12}>
-        <AIAssistant 
-          onTextProcessed={handleAITextProcessed}
-          context={{
-            operation: "encounter_create",
-            patient_id: encounterData.patient_id,
-            encounter_type: "soap_notes"
-          }}
-        />
-      </Grid>
 
       <Grid item xs={12} md={6}>
         <Typography variant="subtitle1" color="primary" gutterBottom>
@@ -587,15 +563,6 @@ const EncounterCreate = () => {
         />
       </Grid>
 
-      <Grid item xs={12}>
-        <TextField
-          fullWidth
-          label="診断コード"
-          value={encounterData.diagnosis_codes}
-          onChange={handleInputChange('diagnosis_codes')}
-          placeholder="ICD-10コードなど"
-        />
-      </Grid>
 
       {/* Clinical Validation Checker - A&P整合性チェック */}
       <Grid item xs={12}>
@@ -603,11 +570,67 @@ const EncounterCreate = () => {
           patientSummary={clinicalSummary?.summary || ''}
           assessment={encounterData.assessment}
           plan={encounterData.plan}
-          diagnosisCodes={encounterData.diagnosis_codes ? encounterData.diagnosis_codes.split(',').map(code => code.trim()) : []}
           onValidationResult={handleValidationResult}
           disabled={loading}
         />
       </Grid>
+
+      {/* Physician Confirmation - 医師確認 */}
+      {validationResult && !physicianConfirmed && (
+        <Grid item xs={12}>
+          <Paper 
+            elevation={2}
+            sx={{ 
+              p: 3,
+              mt: 2,
+              backgroundColor: '#f5f5f5',
+              border: '2px dashed #1976d2',
+              textAlign: 'center'
+            }}
+          >
+            <Typography variant="body1" color="text.secondary" gutterBottom>
+              整合性チェックが完了しました
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              診断内容を確認後、医師確認ボタンを押してください
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              startIcon={<VerifiedUser />}
+              onClick={() => setPhysicianConfirmed(true)}
+              sx={{ 
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem'
+              }}
+            >
+              医師確認済み
+            </Button>
+          </Paper>
+        </Grid>
+      )}
+
+      {/* Confirmation Message - 確認メッセージ */}
+      {physicianConfirmed && (
+        <Grid item xs={12}>
+          <Alert 
+            severity="success" 
+            icon={<CheckCircle />}
+            sx={{ mt: 2 }}
+          >
+            <Box>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                医師による確認完了
+              </Typography>
+              <Typography variant="body2">
+                最終診断は医師が判断しています
+              </Typography>
+            </Box>
+          </Alert>
+        </Grid>
+      )}
 
       <Grid item xs={12}>
         <TextField

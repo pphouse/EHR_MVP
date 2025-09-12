@@ -96,14 +96,6 @@ export const prescriptionsAPI = {
   cancelPrescription: (id) => api.delete(`/prescriptions/${id}`),
 };
 
-// AI Assistant API
-export const aiAssistantAPI = {
-  checkSafety: (data) => api.post('/ai-assistant/safety-check', data),
-  assistDiagnosis: (data) => api.post('/ai-assistant/diagnosis-assist', data),
-  generateSummary: (data) => api.post('/ai-assistant/generate-summary', data),
-  getStatus: () => api.get('/ai-assistant/safety-status'),
-  getAuditLogs: (params) => api.get('/ai-assistant/audit-logs', { params }),
-};
 
 // Generic API error handler
 export const handleAPIError = (error) => {

@@ -14,7 +14,6 @@ from app.models.patient import Patient
 from app.models.encounter import Encounter
 from app.models.prescription import Prescription
 from app.services.fhir_converter_service_v2 import SimpleFHIRConverterService as FHIRConverterService
-from app.services.ai_assistant_service import AIAssistantService
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -171,18 +170,14 @@ async def extract_medical_info(
         }
         
         # AIサービスでの安全性チェック
-        ai_service = AIAssistantService()
-        safety_result = await ai_service.process_medical_text(request.text, request.context)
+        # Safety layer removed - process text directly
+        processed_text = request.text
         
         return {
             "status": "success",
             "extracted_info": extracted_info,
             "statistics": stats,
-            "safety_check": {
-                "risk_level": safety_result.risk_level.value,
-                "confidence": safety_result.confidence_score,
-                "processing_time_ms": safety_result.processing_time_ms
-            }
+            "processed_text": processed_text
         }
         
     except Exception as e:
@@ -235,7 +230,6 @@ async def get_fhir_status(
     """
     try:
         fhir_service = FHIRConverterService()
-        ai_service = AIAssistantService()
         
         return {
             "status": "operational",
@@ -257,8 +251,7 @@ async def get_fhir_status(
                 "prescriptions": True
             },
             "ai_integration": {
-                "azure_openai_configured": ai_service.azure_client is not None,
-                "safety_layer_enabled": True
+                "safety_layer_enabled": False
             }
         }
         

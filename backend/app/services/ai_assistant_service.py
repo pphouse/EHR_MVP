@@ -1,5 +1,5 @@
 """
-AI Assistant Service - Azure OpenAI APIセーフティレイヤー
+AI Assistant Service - Cerebras APIセーフティレイヤー
 ハルシネーション検知、PII漏えい検知、自動リライト機能を提供
 """
 
@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 import asyncio
 from sqlalchemy.orm import Session
-from openai import AzureOpenAI
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -60,30 +60,28 @@ class PIIDetection:
 
 
 class AIAssistantService:
-    """AI Assistant Service with Azure OpenAI API Safety Layer"""
+    """AI Assistant Service with Cerebras API Safety Layer"""
     
     def __init__(self):
         # Import settings from config
         from app.core.config import settings
         
-        # Azure OpenAI API設定
-        self.azure_openai_endpoint = settings.azure_openai_endpoint
-        self.azure_openai_key = settings.azure_openai_key
-        self.azure_openai_version = settings.azure_openai_version
-        self.deployment_name = settings.azure_openai_deployment_name or "gpt-4.1-mini"
+        # Cerebras API設定
+        self.cerebras_api_key = settings.cerebras_api_key
+        self.cerebras_api_url = settings.cerebras_api_url
+        self.cerebras_model_name = settings.cerebras_model_name
         
-        # Azure OpenAIクライアントの初期化
-        self.azure_client = None
-        if self.azure_openai_key and self.azure_openai_endpoint:
+        # Cerebrasクライアントの初期化
+        self.cerebras_client = None
+        if self.cerebras_api_key:
             try:
-                self.azure_client = AzureOpenAI(
-                    api_key=self.azure_openai_key,
-                    azure_endpoint=self.azure_openai_endpoint,
-                    api_version=self.azure_openai_version
+                self.cerebras_client = OpenAI(
+                    api_key=self.cerebras_api_key,
+                    base_url=self.cerebras_api_url
                 )
-                logger.info("Azure OpenAI client initialized successfully")
+                logger.info("Cerebras client initialized successfully")
             except Exception as e:
-                logger.error(f"Failed to initialize Azure OpenAI client: {e}")
+                logger.error(f"Failed to initialize Cerebras client: {e}")
         
         # セーフティ設定
         self.hallucination_threshold = settings.hallucination_threshold
@@ -216,7 +214,7 @@ class AIAssistantService:
     
     async def _detect_hallucination(self, text: str, context: Dict[str, Any] = None) -> float:
         """ハルシネーション検知（Azure OpenAI API使用）"""
-        if not self.azure_client:
+        if not self.cerebras_client:
             logger.warning("Azure OpenAI client not initialized, skipping hallucination detection")
             return 0.0
         
@@ -243,8 +241,8 @@ JSON形式で回答してください:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.azure_client.chat.completions.create(
-                model=self.deployment_name,
+            response = self.cerebras_client.chat.completions.create(
+                model=self.cerebras_model_name,
                 messages=messages,
                 max_tokens=500,
                 temperature=0.1
@@ -301,7 +299,7 @@ JSON形式で回答してください:
     
     async def _auto_rewrite_text(self, text: str, context: Dict[str, Any] = None) -> str:
         """自動リライト処理"""
-        if not self.azure_client:
+        if not self.cerebras_client:
             return text
         
         try:
@@ -324,8 +322,8 @@ JSON形式で回答してください:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.azure_client.chat.completions.create(
-                model=self.deployment_name,
+            response = self.cerebras_client.chat.completions.create(
+                model=self.cerebras_model_name,
                 messages=messages,
                 max_tokens=800,
                 temperature=0.2
@@ -403,12 +401,12 @@ JSON形式で回答してください:
     async def get_safety_status(self) -> Dict[str, Any]:
         """セーフティレイヤーの状態取得"""
         return {
-            "azure_openai_configured": bool(self.azure_client),
+            "cerebras_configured": bool(self.cerebras_client),
             "hallucination_threshold": self.hallucination_threshold,
             "pii_threshold": self.pii_threshold,
             "auto_rewrite_enabled": self.enable_auto_rewrite,
             "supported_pii_types": list(self.pii_patterns.keys()),
             "medical_terms_loaded": len(self.medical_terms),
-            "deployment_name": self.deployment_name,
-            "api_version": self.azure_openai_version
+            "model_name": self.cerebras_model_name,
+            "api_url": self.cerebras_api_url
         }

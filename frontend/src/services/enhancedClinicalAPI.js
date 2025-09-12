@@ -2,23 +2,35 @@
  * Enhanced Clinical Assistant API Client
  * リアルタイム診療支援・状況整理・A&P整合性チェック
  */
+import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api/v1';
+
+// Create axios instance with auth
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 class EnhancedClinicalAPI {
   constructor() {
-    this.baseURL = `${API_BASE_URL}/api/v1/enhanced-clinical`;
-  }
-
-  /**
-   * 認証ヘッダーを取得
-   */
-  getAuthHeaders() {
-    const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    };
+    this.baseURL = '/enhanced-clinical';
   }
 
   /**
@@ -28,18 +40,8 @@ class EnhancedClinicalAPI {
    */
   async generatePatientSummary(clinicalData) {
     try {
-      const response = await fetch(`${this.baseURL}/generate-patient-summary`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(clinicalData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result;
+      const response = await api.post(`${this.baseURL}/generate-patient-summary`, clinicalData);
+      return response.data;
     } catch (error) {
       console.error('Patient summary generation error:', error);
       throw error;
@@ -53,18 +55,8 @@ class EnhancedClinicalAPI {
    */
   async validateClinicalReasoning(validationData) {
     try {
-      const response = await fetch(`${this.baseURL}/validate-clinical-reasoning`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(validationData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result;
+      const response = await api.post(`${this.baseURL}/validate-clinical-reasoning`, validationData);
+      return response.data;
     } catch (error) {
       console.error('Clinical validation error:', error);
       throw error;
@@ -78,18 +70,8 @@ class EnhancedClinicalAPI {
    */
   async detectPII(piiData) {
     try {
-      const response = await fetch(`${this.baseURL}/enhanced-pii-detection`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(piiData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result;
+      const response = await api.post(`${this.baseURL}/enhanced-pii-detection`, piiData);
+      return response.data;
     } catch (error) {
       console.error('Enhanced PII detection error:', error);
       throw error;
@@ -104,18 +86,8 @@ class EnhancedClinicalAPI {
    */
   async generateClinicalRecommendations(patientData, diagnosis) {
     try {
-      const response = await fetch(`${this.baseURL}/clinical-recommendations`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ patient_data: patientData, diagnosis })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result;
+      const response = await api.post(`${this.baseURL}/clinical-recommendations`, { patient_data: patientData, diagnosis });
+      return response.data;
     } catch (error) {
       console.error('Clinical recommendations error:', error);
       throw error;
@@ -128,17 +100,8 @@ class EnhancedClinicalAPI {
    */
   async getServiceStatus() {
     try {
-      const response = await fetch(`${this.baseURL}/enhanced-clinical-status`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result;
+      const response = await api.get(`${this.baseURL}/enhanced-clinical-status`);
+      return response.data;
     } catch (error) {
       console.error('Service status error:', error);
       throw error;

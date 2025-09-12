@@ -1,0 +1,130 @@
+/* 患者様向け印刷スタイル */
+@media print {
+  /* 不要な要素を非表示 */
+  .MuiAppBar-root,
+  .MuiDrawer-root,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* 基本レイアウト */
+  body {
+    margin: 0;
+    padding: 20mm;
+    background: white;
+    color: black;
+  }
+
+  /* カラー調整 */
+  .MuiPaper-root {
+    box-shadow: none !important;
+    border: 1px solid #ddd;
+  }
+
+  /* タイトル */
+  h1, h2, h3, h4, h5, h6 {
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  /* アラート */
+  .MuiAlert-root {
+    border: 1px solid currentColor;
+    background-color: transparent !important;
+  }
+
+  /* リスト */
+  .MuiList-root {
+    page-break-inside: avoid;
+  }
+
+  /* カード */
+  .MuiCard-root {
+    page-break-inside: avoid;
+    margin-bottom: 10mm;
+  }
+
+  /* ページ設定 */
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+
+  /* フッター */
+  .print-footer {
+    position: fixed;
+    bottom: 10mm;
+    left: 20mm;
+    right: 20mm;
+    text-align: center;
+    font-size: 10pt;
+    color: #666;
+    border-top: 1px solid #ddd;
+    padding-top: 5mm;
+  }
+
+  /* 患者情報ヘッダー */
+  .patient-header {
+    border-bottom: 2px solid #333;
+    padding-bottom: 5mm;
+    margin-bottom: 10mm;
+  }
+
+  /* 診療内容 */
+  .diagnosis-section {
+    background-color: #f5f5f5 !important;
+    padding: 5mm;
+    border: 1px solid #ddd;
+    margin: 5mm 0;
+  }
+
+  /* バイタルサイン表 */
+  .vital-signs-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 5mm 0;
+  }
+
+  .vital-signs-table th,
+  .vital-signs-table td {
+    border: 1px solid #ddd;
+    padding: 3mm;
+    text-align: left;
+  }
+
+  .vital-signs-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+  }
+
+  /* AI説明セクション */
+  .ai-disclosure {
+    border: 2px solid #1976d2;
+    padding: 5mm;
+    margin: 10mm 0;
+    background-color: #e3f2fd !important;
+  }
+
+  /* 次回診療 */
+  .next-appointment {
+    border: 1px dashed #666;
+    padding: 5mm;
+    margin-top: 10mm;
+  }
+
+  /* QRコード */
+  .qr-code {
+    width: 30mm;
+    height: 30mm;
+    margin: 5mm auto;
+  }
+
+  /* 医療機関情報 */
+  .clinic-info {
+    text-align: center;
+    margin-top: 20mm;
+    padding-top: 5mm;
+    border-top: 1px solid #ddd;
+  }
+}
