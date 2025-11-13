@@ -8,13 +8,13 @@ EHR_MVPの鑑別診断と治療提案機能は、複数の大規模言語モデ�
 
 ### 使用するモデル
 
-1. **Qwen 3 235B Instruct** - 高精度な指示追従モデル
-2. **Llama 3.3 70B** - バランスの取れた汎用モデル
-3. **OpenAI GPT OSS** - オープンソースのGPT系モデル
+1. **Llama 3.1 8B** - 高速・軽量モデル（素早い初期診断）
+2. **Llama 3.1 70B** - バランス型の高性能モデル
+3. **Llama 3.3 70B** - 最新の70Bモデル（最先端の診断能力）
 
 ### 最終診断モデル
 
-- **Qwen 3 235B Thinking** - 3つのモデルの結果を統合し、最終診断を生成
+- **Llama 3.1 70B (Thinking)** - 3つのモデルの結果を統合し、最終診断を生成
 
 ### プロバイダー
 
@@ -25,12 +25,12 @@ EHR_MVPの鑑別診断と治療提案機能は、複数の大規模言語モデ�
 ```
 1. 患者データ入力（S&O、バイタル、既往歴など）
    ↓
-2. 3つのLLMが並列で独立して診断を生成
-   - Qwen 3 235B Instruct → 診断結果A
-   - Llama 3.3 70B → 診断結果B
-   - OpenAI GPT OSS → 診断結果C
+2. 3つのLlamaモデルが並列で独立して診断を生成
+   - Llama 3.1 8B → 診断結果A（高速・軽量）
+   - Llama 3.1 70B → 診断結果B（バランス型）
+   - Llama 3.3 70B → 診断結果C（最新・高性能）
    ↓
-3. Qwen 3 235B Thinkingが3つの結果を評価・統合
+3. Llama 3.1 70Bが3つの結果を評価・統合
    - 共通している所見を抽出
    - 矛盾点を医学的根拠に基づいて判断
    - 各モデルの信頼度を考慮
@@ -309,13 +309,14 @@ backend/
 
 ```python
 class CerebrasService:
-    # モデル定義
-    QWEN_235B_INSTRUCT = "qwen/qwen-2.5-72b-instruct"
-    LLAMA_33_70B = "meta-llama/llama-3.3-70b-instruct"
-    OPENAI_GPT_OSS = "openai-community/gpt2-xl"
+    # モデル定義 (2025年版)
+    LLAMA_31_8B = "llama3.1-8b"           # 高速・軽量モデル
+    LLAMA_31_70B = "llama3.1-70b"         # バランス型モデル
+    LLAMA_33_70B = "llama-3.3-70b"        # 最新の70Bモデル
+    THINKING_MODEL = "llama3.1-70b"       # 最終診断統合用
 
-    # 新しいモデルを追加する場合
-    NEW_MODEL = "provider/model-name"
+    # 新しいモデルを追加する場合（Cerebrasのドキュメントで確認）
+    # NEW_MODEL = "model-name"
 ```
 
 ## 今後の改善予定

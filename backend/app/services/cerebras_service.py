@@ -43,11 +43,14 @@ class EnsembleDiagnosisResult:
 class CerebrasService:
     """Cerebras API統合サービス"""
 
-    # Cerebrasで利用可能なモデル
-    QWEN_235B_INSTRUCT = "qwen/qwen-2.5-72b-instruct"
-    LLAMA_33_70B = "meta-llama/llama-3.3-70b-instruct"
-    OPENAI_GPT_OSS = "openai-community/gpt2-xl"  # OSS版のGPT相当
-    QWEN_235B_THINKING = "qwen/qwen-2.5-72b-instruct"  # Thinking用
+    # Cerebrasで利用可能なモデル (2025年最新)
+    # 検証済みのモデル名を使用
+    LLAMA_31_8B = "llama3.1-8b"           # 高速・軽量モデル
+    LLAMA_31_70B = "llama3.1-70b"         # バランス型モデル
+    LLAMA_33_70B = "llama-3.3-70b"        # 最新の70Bモデル
+
+    # Thinking用の最高性能モデル
+    THINKING_MODEL = "llama3.1-70b"       # 最終診断統合用
 
     def __init__(self):
         """Cerebras APIクライアントの初期化"""
@@ -179,17 +182,17 @@ class CerebrasService:
 
         tasks = [
             self.generate_diagnosis_with_model(
-                self.QWEN_235B_INSTRUCT,
+                self.LLAMA_31_8B,
+                diagnosis_prompt,
+                system_prompt
+            ),
+            self.generate_diagnosis_with_model(
+                self.LLAMA_31_70B,
                 diagnosis_prompt,
                 system_prompt
             ),
             self.generate_diagnosis_with_model(
                 self.LLAMA_33_70B,
-                diagnosis_prompt,
-                system_prompt
-            ),
-            self.generate_diagnosis_with_model(
-                self.OPENAI_GPT_OSS,
                 diagnosis_prompt,
                 system_prompt
             )
@@ -350,7 +353,7 @@ class CerebrasService:
 
         try:
             response = self.client.chat.completions.create(
-                model=self.QWEN_235B_THINKING,
+                model=self.THINKING_MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": synthesis_prompt}
