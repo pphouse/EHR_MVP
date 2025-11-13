@@ -5,6 +5,10 @@ venv/
 backend/venv/
 *.egg-info/
 
+# Database
+*.db
+backend/ehr_mvp.db
+
 # Logs
 *.log
 backend/backend.log
