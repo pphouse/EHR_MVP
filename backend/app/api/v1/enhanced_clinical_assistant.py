@@ -68,7 +68,8 @@ async def generate_patient_summary(
         # ログ記録
         logger.info(f"Patient summary generated for user {current_user.id}")
         
-        return {
+        # 基本レスポンス
+        response_data = {
             "status": "success",
             "patient_situation": {
                 "summary": situation.summary,
@@ -81,6 +82,19 @@ async def generate_patient_summary(
             },
             "usage_note": "この要約は医学的判断の補助として提供されています。最終的な診断・治療方針は医師の判断に基づいてください。"
         }
+
+        # アンサンブル診断の追加情報
+        if situation.is_ensemble:
+            response_data["ensemble_info"] = {
+                "is_ensemble": True,
+                "consensus_level": situation.consensus_level,
+                "synthesis_reasoning": situation.synthesis_reasoning,
+                "models_used": len(situation.individual_model_results) if situation.individual_model_results else 0,
+                "individual_results": situation.individual_model_results
+            }
+            response_data["usage_note"] += " この診断は3つの異なるAIモデルの結果を統合したアンサンブル診断です。"
+
+        return response_data
         
     except Exception as e:
         logger.error(f"Patient summary generation error: {e}")
