@@ -46,14 +46,16 @@ class CerebrasService:
     # Cerebrasで利用可能なモデル (2025年最新)
     # 検証済みのモデル名を使用
     LLAMA_31_8B = "llama3.1-8b"           # 高速・軽量モデル
-    LLAMA_31_70B = "llama3.1-70b"         # バランス型モデル
     LLAMA_33_70B = "llama-3.3-70b"        # 最新の70Bモデル
 
+    # Azure OpenAI GPT-5
+    AZURE_GPT5 = "azure-gpt-5"            # Azure OpenAI GPT-5
+
     # Thinking用の最高性能モデル
-    THINKING_MODEL = "llama3.1-70b"       # 最終診断統合用
+    THINKING_MODEL = "qwen-3-235b-a22b-thinking-2507"  # 最終診断統合用
 
     def __init__(self):
-        """Cerebras APIクライアントの初期化"""
+        """Cerebras APIとAzure OpenAIクライアントの初期化"""
         self.api_key = os.getenv("CEREBRAS_API_KEY")
 
         if not self.api_key:
@@ -70,6 +72,27 @@ class CerebrasService:
             except Exception as e:
                 logger.error(f"Failed to initialize Cerebras client: {e}")
                 self.client = None
+
+        # Azure OpenAI クライアントの初期化（v1 API）
+        self.azure_client = None
+        azure_api_key = os.getenv("AZURE_OPENAI_API_KEY")
+        azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+
+        if azure_api_key and azure_endpoint:
+            try:
+                # 最新のv1 APIを使用（OpenAIクライアントでAzureをサポート）
+                # エンドポイントに /openai/v1 を追加
+                if not azure_endpoint.endswith('/'):
+                    azure_endpoint += '/'
+                base_url = f"{azure_endpoint}openai/v1/"
+
+                self.azure_client = OpenAI(
+                    api_key=azure_api_key,
+                    base_url=base_url
+                )
+                logger.info(f"Azure OpenAI client initialized successfully with base_url: {base_url}")
+            except Exception as e:
+                logger.error(f"Failed to initialize Azure OpenAI client: {e}")
 
     async def generate_diagnosis_with_model(
         self,
@@ -88,28 +111,54 @@ class CerebrasService:
         Returns:
             DiagnosisResult: 診断結果
         """
-        if not self.client:
-            logger.error("Cerebras client not available")
-            return None
-
         try:
             logger.info(f"Generating diagnosis with {model_name}")
 
-            # Cerebras APIで診断を生成
-            response = self.client.chat.completions.create(
-                model=model_name,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=2000,
-                temperature=0.3
-            )
+            # Azure OpenAIまたはCerebrasを選択
+            if model_name == self.AZURE_GPT5:
+                if not self.azure_client:
+                    logger.error("Azure OpenAI client not available")
+                    return None
+
+                # GPT-5はreasoningモデルなので大きめのmax_completion_tokensが必要
+                # temperatureはデフォルト値(1.0)のみサポート
+                # system promptは使用せず、userメッセージに統合
+                combined_prompt = f"{system_prompt}\n\n{prompt}"
+                response = self.azure_client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "user", "content": combined_prompt}
+                    ],
+                    max_completion_tokens=6000  # reasoning + output用に大きめに設定
+                )
+            else:
+                if not self.client:
+                    logger.error("Cerebras client not available")
+                    return None
+
+                # Cerebras APIで診断を生成
+                response = self.client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=2000,
+                    temperature=0.3
+                )
 
             content = response.choices[0].message.content
 
-            # JSON解析
-            result = json.loads(content)
+            # JSON解析（前後のテキストを除去）
+            content_stripped = content.strip()
+            json_start = content_stripped.find('{')
+            json_end = content_stripped.rfind('}') + 1
+
+            if json_start != -1 and json_end > json_start:
+                json_content = content_stripped[json_start:json_end]
+                result = json.loads(json_content)
+            else:
+                result = json.loads(content)
 
             diagnosis = DiagnosisResult(
                 model_name=model_name,
@@ -187,12 +236,12 @@ class CerebrasService:
                 system_prompt
             ),
             self.generate_diagnosis_with_model(
-                self.LLAMA_31_70B,
+                self.LLAMA_33_70B,
                 diagnosis_prompt,
                 system_prompt
             ),
             self.generate_diagnosis_with_model(
-                self.LLAMA_33_70B,
+                self.AZURE_GPT5,
                 diagnosis_prompt,
                 system_prompt
             )
@@ -302,7 +351,7 @@ class CerebrasService:
 
         # 最終診断用プロンプト
         synthesis_prompt = f"""
-以下は、3つの異なる臨床AIモデルが同じ患者情報を分析した結果です。
+以下は、3つの異なる臨床AIモデル（Llama 3.1 8B、Llama 3.3 70B、Azure GPT-5）が同じ患者情報を分析した結果です。
 これらの結果を統合し、最も医学的に妥当性の高い最終診断を提示してください。
 
 【元の患者情報】:
@@ -352,18 +401,57 @@ class CerebrasService:
 """
 
         try:
+            # Thinkingモデル（Qwen）で統合診断を生成
             response = self.client.chat.completions.create(
                 model=self.THINKING_MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": synthesis_prompt}
                 ],
-                max_tokens=2500,
+                max_completion_tokens=2500,
                 temperature=0.2  # より保守的な温度設定
             )
 
             content = response.choices[0].message.content
-            result = json.loads(content)
+            logger.info(f"Thinking model response length: {len(content) if content else 0}")
+
+            if not content or len(content.strip()) == 0:
+                logger.error("Empty response from thinking model")
+                raise Exception("Empty response from thinking model")
+
+            logger.info(f"Thinking model raw response: {content[:1000]}...")
+
+            # JSONの開始/終了位置を特定（複数のJSONブロックがある可能性に対応）
+            content = content.strip()
+
+            # コードブロック内のJSONを探す
+            if '```json' in content:
+                json_start = content.find('```json') + 7
+                json_end = content.find('```', json_start)
+                if json_end > json_start:
+                    content = content[json_start:json_end].strip()
+            elif '```' in content:
+                json_start = content.find('```') + 3
+                json_end = content.find('```', json_start)
+                if json_end > json_start:
+                    content = content[json_start:json_end].strip()
+
+            # 最初と最後の { } を見つける
+            json_start = content.find('{')
+            json_end = content.rfind('}') + 1
+
+            if json_start == -1 or json_end == 0:
+                logger.error(f"No valid JSON found. Content: {content[:500]}")
+                raise Exception(f"No valid JSON found in thinking model response")
+
+            json_content = content[json_start:json_end]
+
+            try:
+                result = json.loads(json_content)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON decode error: {e}")
+                logger.error(f"Failed JSON content: {json_content[:500]}")
+                raise
 
             ensemble_result = EnsembleDiagnosisResult(
                 final_summary=result.get("final_summary", ""),

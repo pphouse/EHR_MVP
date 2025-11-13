@@ -48,10 +48,16 @@ class Settings(BaseSettings):
     project_name: str = "EHR MVP"
     version: str = "1.0.0"
     
+    # Azure OpenAI
+    azure_openai_endpoint: Optional[str] = None
+    azure_openai_api_key: Optional[str] = None
+    azure_openai_embedding_deployment: str = "text-embedding-3-small"
+    azure_openai_chat_deployment: str = "gpt-4o-mini"
+    
     # Cerebras API
     cerebras_api_key: Optional[str] = None
     cerebras_api_url: str = "https://api.cerebras.ai/v1"
-    cerebras_model_name: str = "qwen-3-235b-a22b-instruct-2507"
+    cerebras_model_name: str = "llama-4-scout-17b-16e-instruct"
     
     # AI Assistant Settings
     hallucination_threshold: float = 0.7
@@ -59,6 +65,26 @@ class Settings(BaseSettings):
     enable_auto_rewrite: bool = True
     max_rewrite_attempts: int = 3
     
+    @validator("azure_openai_api_key", pre=True)
+    def get_azure_openai_api_key(cls, v):
+        """Azure OpenAI APIキーを環境変数から読み取る"""
+        if v:
+            return v
+        env_key = os.environ.get("AZURE_OPENAI_API_KEY")
+        if env_key:
+            return env_key
+        return None
+    
+    @validator("azure_openai_endpoint", pre=True)
+    def get_azure_openai_endpoint(cls, v):
+        """Azure OpenAI エンドポイントを環境変数から読み取る"""
+        if v:
+            return v
+        env_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
+        if env_endpoint:
+            return env_endpoint
+        return None
+
     @validator("cerebras_api_key", pre=True)
     def get_cerebras_api_key(cls, v):
         """Cerebras APIキーを環境変数から読み取る"""

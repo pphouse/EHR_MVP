@@ -18,6 +18,10 @@ import {
   StepLabel,
   Paper,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -33,6 +37,7 @@ import { useNotificationSound } from '../hooks/useNotificationSound';
 import RealTimeClinicalSummary from '../components/RealTimeClinicalSummary';
 import ClinicalValidationChecker from '../components/ClinicalValidationChecker';
 import EnhancedPIIChecker from '../components/EnhancedPIIChecker';
+import RAGQueryInterface from '../components/RAGQueryInterface';
 
 const steps = ['基本情報', 'バイタルサイン', 'SOAP記録'];
 
@@ -50,6 +55,7 @@ const EncounterCreate = () => {
   const [validationResult, setValidationResult] = useState(null);
   const [piiResult, setPIIResult] = useState(null);
   const [physicianConfirmed, setPhysicianConfirmed] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   
   const [encounterData, setEncounterData] = useState({
     patient_id: searchParams.get('patient_id') || '',
@@ -157,7 +163,16 @@ const EncounterCreate = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
+  const handleCreateButtonClick = () => {
+    setConfirmDialogOpen(true);
+  };
+
+  const handleConfirmClose = () => {
+    setConfirmDialogOpen(false);
+  };
+
   const handleSubmit = async () => {
+    console.log('=== handleSubmit started ===');
     try {
       setLoading(true);
       setError(null);
@@ -575,62 +590,6 @@ const EncounterCreate = () => {
         />
       </Grid>
 
-      {/* Physician Confirmation - 医師確認 */}
-      {validationResult && !physicianConfirmed && (
-        <Grid item xs={12}>
-          <Paper 
-            elevation={2}
-            sx={{ 
-              p: 3,
-              mt: 2,
-              backgroundColor: '#f5f5f5',
-              border: '2px dashed #1976d2',
-              textAlign: 'center'
-            }}
-          >
-            <Typography variant="body1" color="text.secondary" gutterBottom>
-              整合性チェックが完了しました
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              診断内容を確認後、医師確認ボタンを押してください
-            </Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              startIcon={<VerifiedUser />}
-              onClick={() => setPhysicianConfirmed(true)}
-              sx={{ 
-                px: 4,
-                py: 1.5,
-                fontSize: '1.1rem'
-              }}
-            >
-              医師確認済み
-            </Button>
-          </Paper>
-        </Grid>
-      )}
-
-      {/* Confirmation Message - 確認メッセージ */}
-      {physicianConfirmed && (
-        <Grid item xs={12}>
-          <Alert 
-            severity="success" 
-            icon={<CheckCircle />}
-            sx={{ mt: 2 }}
-          >
-            <Box>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                医師による確認完了
-              </Typography>
-              <Typography variant="body2">
-                最終診断は医師が判断しています
-              </Typography>
-            </Box>
-          </Alert>
-        </Grid>
-      )}
 
       <Grid item xs={12}>
         <TextField
@@ -743,7 +702,7 @@ const EncounterCreate = () => {
               {activeStep === steps.length - 1 ? (
                 <Button
                   variant="contained"
-                  onClick={handleSubmit}
+                  onClick={handleCreateButtonClick}
                   disabled={loading || !isStepValid(activeStep)}
                   startIcon={<Save />}
                 >
@@ -763,6 +722,66 @@ const EncounterCreate = () => {
           </Box>
         </CardContent>
       </Card>
+
+      {/* RAG検索インターフェース */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <RAGQueryInterface />
+        </CardContent>
+      </Card>
+
+      {/* 確認ダイアログ */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={handleConfirmClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <VerifiedUser color="primary" />
+            <Typography variant="h6">医師確認</Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            <Typography variant="body1" gutterBottom>
+              診療記録を作成します。
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              診断内容を確認し、医師の責任のもとで記録を作成することを確認してください。
+            </Typography>
+            {validationResult && validationResult.is_consistent === false && (
+              <Alert severity="warning" sx={{ mt: 2 }}>
+                整合性チェックで不一致が検出されています。内容を再確認してください。
+              </Alert>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleConfirmClose} color="inherit">
+            キャンセル
+          </Button>
+          <Button
+            onClick={async () => {
+              try {
+                setPhysicianConfirmed(true);
+                handleConfirmClose();
+                await handleSubmit();
+              } catch (error) {
+                console.error('Error during submission:', error);
+                setError('診療記録の作成に失敗しました。もう一度お試しください。');
+                setConfirmDialogOpen(false);
+              }
+            }}
+            variant="contained"
+            color="primary"
+            startIcon={<CheckCircle />}
+          >
+            確認して作成
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

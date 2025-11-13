@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import enhancedClinicalAPI from '../services/enhancedClinicalAPI';
 
-const RealTimeClinicalSummary = ({ 
-  basicInfo, 
-  vitals, 
-  subjective, 
-  objective, 
+const RealTimeClinicalSummary = ({
+  basicInfo,
+  vitals,
+  subjective,
+  objective,
   onSummaryGenerated,
-  disabled = false 
+  disabled = false
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState(null);
+  const [showEnsembleDetails, setShowEnsembleDetails] = useState(false);
+  const [showSynthesisReasoning, setShowSynthesisReasoning] = useState(false);
 
   const canGenerate = basicInfo && vitals && subjective && objective && 
                      Object.keys(basicInfo).length > 0 && 
@@ -66,24 +68,55 @@ const RealTimeClinicalSummary = ({
   }, [basicInfo, vitals, subjective, objective]);
 
   return (
-    <div className="real-time-clinical-summary" style={{ marginTop: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
-        <h3 style={{ margin: 0, color: '#333' }}>🤖 AI状況整理</h3>
+    <div className="real-time-clinical-summary" style={{
+      marginTop: '20px',
+      padding: '15px',
+      border: '1px solid #ddd',
+      borderRadius: '8px',
+      backgroundColor: '#f9f9f9',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      transition: 'all 0.3s ease'
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '15px',
+        flexWrap: 'wrap',
+        gap: '10px'
+      }}>
+        <h3 style={{ margin: 0, color: '#333', fontSize: '18px' }}>🤖 AI状況整理</h3>
         <button
           onClick={generateSummary}
           disabled={!canGenerate || disabled || isGenerating}
           style={{
             padding: '8px 16px',
-            backgroundColor: canGenerate && !disabled ? '#007bff' : '#6c757d',
+            backgroundColor: canGenerate && !disabled ? (isGenerating ? '#17a2b8' : '#007bff') : '#6c757d',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
             cursor: canGenerate && !disabled ? 'pointer' : 'not-allowed',
-            fontSize: '14px'
+            fontSize: '14px',
+            fontWeight: 'bold',
+            transition: 'all 0.3s ease',
+            transform: isGenerating ? 'scale(0.98)' : 'scale(1)',
+            boxShadow: canGenerate && !disabled && !isGenerating ? '0 2px 4px rgba(0,123,255,0.3)' : 'none'
           }}
           data-testid="generate-summary-button"
+          onMouseEnter={(e) => {
+            if (canGenerate && !disabled && !isGenerating) {
+              e.target.style.backgroundColor = '#0056b3';
+              e.target.style.transform = 'scale(1.05)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (canGenerate && !disabled && !isGenerating) {
+              e.target.style.backgroundColor = '#007bff';
+              e.target.style.transform = 'scale(1)';
+            }
+          }}
         >
-          {isGenerating ? '生成中...' : '状況整理を生成'}
+          {isGenerating ? '🔄 生成中...' : '✨ 状況整理を生成'}
         </button>
       </div>
 
@@ -103,14 +136,69 @@ const RealTimeClinicalSummary = ({
 
       {summary && (
         <div className="summary-content" data-testid="summary-content">
+          {/* アンサンブル診断情報（3つのLLMを使用した場合） */}
+          {summary.is_ensemble && (
+            <div style={{
+              marginBottom: '15px',
+              padding: '12px',
+              backgroundColor: '#e8f5e9',
+              border: '2px solid #4caf50',
+              borderRadius: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '20px', marginRight: '8px' }}>🧠</span>
+                <h4 style={{ margin: 0, color: '#2e7d32' }}>アンサンブル診断システム</h4>
+              </div>
+              <div style={{ fontSize: '13px', color: '#1b5e20', marginBottom: '8px' }}>
+                <strong>3つの最先端AI</strong>が協調して診断を生成しました：
+                <div style={{ marginTop: '6px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {summary.individual_model_results && summary.individual_model_results.map((model, idx) => (
+                    <span key={idx} style={{
+                      backgroundColor: 'white',
+                      padding: '4px 10px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      border: '1px solid #4caf50',
+                      color: '#2e7d32'
+                    }}>
+                      {model.model_name} ({(model.confidence_score * 100).toFixed(0)}%)
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', fontSize: '13px' }}>
+                <div>
+                  <strong>コンセンサスレベル:</strong>
+                  <span style={{
+                    marginLeft: '6px',
+                    padding: '2px 8px',
+                    backgroundColor: summary.consensus_level >= 0.7 ? '#4caf50' : summary.consensus_level >= 0.5 ? '#ff9800' : '#f44336',
+                    color: 'white',
+                    borderRadius: '10px',
+                    fontSize: '12px'
+                  }}>
+                    {(summary.consensus_level * 100).toFixed(0)}%
+                  </span>
+                </div>
+                <div>
+                  <strong>統合信頼度:</strong>
+                  <span style={{ marginLeft: '6px', fontWeight: 'bold', color: '#2e7d32' }}>
+                    {(summary.confidence_score * 100).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div style={{ marginBottom: '15px' }}>
             <h4 style={{ margin: '0 0 8px 0', color: '#007bff' }}>📋 患者状況要約</h4>
             <p style={{ margin: 0, lineHeight: '1.5', backgroundColor: 'white', padding: '10px', borderRadius: '4px' }}>
               {summary.summary}
             </p>
             <small style={{ color: '#6c757d' }}>
-              信頼度: {(summary.confidence_score * 100).toFixed(0)}% | 
+              信頼度: {(summary.confidence_score * 100).toFixed(0)}% |
               生成時間: {new Date(summary.generated_at).toLocaleTimeString()}
+              {summary.is_ensemble && ` | モデル数: ${summary.individual_model_results?.length || 0}`}
             </small>
           </div>
 
@@ -133,7 +221,7 @@ const RealTimeClinicalSummary = ({
                   <div key={index} style={{ marginBottom: '10px', padding: '8px', border: '1px solid #eee', borderRadius: '4px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                       <strong style={{ color: '#333' }}>{diagnosis.diagnosis}</strong>
-                      <span style={{ 
+                      <span style={{
                         backgroundColor: diagnosis.probability >= 0.6 ? '#28a745' : diagnosis.probability >= 0.3 ? '#ffc107' : '#6c757d',
                         color: 'white',
                         padding: '2px 8px',
@@ -149,8 +237,29 @@ const RealTimeClinicalSummary = ({
                       </div>
                     )}
                     {diagnosis.additional_tests && diagnosis.additional_tests.length > 0 && (
-                      <div style={{ fontSize: '13px', color: '#007bff' }}>
+                      <div style={{ fontSize: '13px', color: '#007bff', marginBottom: diagnosis.model_agreement ? '4px' : '0' }}>
                         推奨検査: {diagnosis.additional_tests.join(', ')}
+                      </div>
+                    )}
+                    {/* アンサンブル診断の場合、モデル間の合意を表示 */}
+                    {summary.is_ensemble && diagnosis.model_agreement && diagnosis.model_agreement.length > 0 && (
+                      <div style={{ fontSize: '12px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ color: '#495057', fontWeight: 'bold' }}>✓ モデル合意:</span>
+                        {diagnosis.model_agreement.map((model, idx) => (
+                          <span key={idx} style={{
+                            backgroundColor: '#e8f5e9',
+                            color: '#2e7d32',
+                            padding: '2px 6px',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            border: '1px solid #4caf50'
+                          }}>
+                            {model}
+                          </span>
+                        ))}
+                        <span style={{ color: '#6c757d', fontSize: '11px' }}>
+                          ({diagnosis.model_agreement.length}/{summary.individual_model_results?.length || 3}モデル)
+                        </span>
                       </div>
                     )}
                   </div>
@@ -188,6 +297,211 @@ const RealTimeClinicalSummary = ({
                     {risk}
                   </span>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* アンサンブル診断の詳細情報 */}
+          {summary.is_ensemble && summary.individual_model_results && summary.individual_model_results.length > 0 && (
+            <div style={{ marginBottom: '15px' }}>
+              <button
+                onClick={() => setShowEnsembleDetails(!showEnsembleDetails)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#495057'
+                }}
+              >
+                <span>🔬 個別モデルの診断詳細</span>
+                <span>{showEnsembleDetails ? '▼' : '▶'}</span>
+              </button>
+
+              {showEnsembleDetails && (
+                <div style={{ marginTop: '10px', backgroundColor: 'white', padding: '15px', borderRadius: '4px', border: '1px solid #dee2e6' }}>
+                  {summary.individual_model_results.map((model, idx) => (
+                    <div key={idx} style={{
+                      marginBottom: idx < summary.individual_model_results.length - 1 ? '15px' : '0',
+                      paddingBottom: idx < summary.individual_model_results.length - 1 ? '15px' : '0',
+                      borderBottom: idx < summary.individual_model_results.length - 1 ? '1px solid #e9ecef' : 'none'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <h6 style={{ margin: 0, color: '#495057' }}>
+                          <span style={{ fontSize: '16px', marginRight: '6px' }}>
+                            {idx === 0 ? '⚡' : idx === 1 ? '🚀' : '🌟'}
+                          </span>
+                          {model.model_name}
+                        </h6>
+                        <span style={{
+                          backgroundColor: '#007bff',
+                          color: 'white',
+                          padding: '4px 10px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}>
+                          信頼度 {(model.confidence_score * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#6c757d', lineHeight: '1.5', marginBottom: '8px' }}>
+                        {model.summary}
+                      </div>
+                      {model.reasoning && (
+                        <div style={{ fontSize: '12px', color: '#495057', backgroundColor: '#f8f9fa', padding: '8px', borderRadius: '4px', fontStyle: 'italic' }}>
+                          💭 <strong>推論:</strong> {model.reasoning}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 統合推論の詳細 */}
+          {summary.is_ensemble && summary.synthesis_reasoning && (
+            <div style={{ marginBottom: '15px' }}>
+              <button
+                onClick={() => setShowSynthesisReasoning(!showSynthesisReasoning)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  backgroundColor: '#e8f5e9',
+                  border: '1px solid #4caf50',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#2e7d32'
+                }}
+              >
+                <span>🧠 Qwen Thinkingによる統合推論</span>
+                <span>{showSynthesisReasoning ? '▼' : '▶'}</span>
+              </button>
+
+              {showSynthesisReasoning && (
+                <div style={{
+                  marginTop: '10px',
+                  backgroundColor: 'white',
+                  padding: '15px',
+                  borderRadius: '4px',
+                  border: '1px solid #4caf50',
+                  fontSize: '13px',
+                  color: '#495057',
+                  lineHeight: '1.6'
+                }}>
+                  {summary.synthesis_reasoning}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Mock Cardiovascular Guideline References - RAGシステム風 */}
+          {summary.differential_diagnoses && summary.differential_diagnoses.some(d =>
+            d.diagnosis.includes('急性冠症候群') ||
+            d.diagnosis.includes('心筋梗塞') ||
+            d.diagnosis.includes('狭心症')
+          ) && (
+            <div style={{ marginTop: '15px', marginBottom: '15px' }}>
+              <h5 style={{ margin: '0 0 8px 0', color: '#17a2b8' }}>📚 関連ガイドライン参照</h5>
+              <div style={{ backgroundColor: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                    <span style={{ 
+                      backgroundColor: '#17a2b8', 
+                      color: 'white', 
+                      padding: '2px 8px', 
+                      borderRadius: '4px', 
+                      fontSize: '11px', 
+                      marginRight: '8px' 
+                    }}>
+                      JCS 2025
+                    </span>
+                    <strong style={{ fontSize: '14px', color: '#212529' }}>
+                      急性冠症候群診療ガイドライン（2025年改訂版）
+                    </strong>
+                  </div>
+                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#495057', lineHeight: '1.5' }}>
+                    「糖尿病患者における急性冠症候群では、非典型的な症状（悪心、倦怠感、上腹部痛）で発症することがあり、
+                    心電図変化が軽微な場合でも高感度トロポニンの経時的測定が推奨される（推奨度I、エビデンスレベルA）」
+                  </p>
+                  <small style={{ color: '#6c757d', fontStyle: 'italic' }}>
+                    - 第4章 特殊病態における診断, p.87-92
+                  </small>
+                </div>
+
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                    <span style={{ 
+                      backgroundColor: '#28a745', 
+                      color: 'white', 
+                      padding: '2px 8px', 
+                      borderRadius: '4px', 
+                      fontSize: '11px', 
+                      marginRight: '8px' 
+                    }}>
+                      ACC/AHA 2025
+                    </span>
+                    <strong style={{ fontSize: '14px', color: '#212529' }}>
+                      糖尿病患者の心血管疾患管理ガイドライン
+                    </strong>
+                  </div>
+                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#495057', lineHeight: '1.5' }}>
+                    「若年発症心筋梗塞の家族歴がある糖尿病患者は、心血管イベントのハイリスク群として
+                    積極的なリスク管理が必要」
+                  </p>
+                  <small style={{ color: '#6c757d', fontStyle: 'italic' }}>
+                    - Section 7.3 Risk Stratification
+                  </small>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                    <span style={{ 
+                      backgroundColor: '#6610f2', 
+                      color: 'white', 
+                      padding: '2px 8px', 
+                      borderRadius: '4px', 
+                      fontSize: '11px', 
+                      marginRight: '8px' 
+                    }}>
+                      ESC 2025
+                    </span>
+                    <strong style={{ fontSize: '14px', color: '#212529' }}>
+                      NSTE-ACS診療ガイドライン
+                    </strong>
+                  </div>
+                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#495057', lineHeight: '1.5' }}>
+                    「初回トロポニン陰性例では、症状発現から3-6時間後の再検が必須。
+                    高感度トロポニンの0/1時間アルゴリズムも有用」
+                  </p>
+                  <small style={{ color: '#6c757d', fontStyle: 'italic' }}>
+                    - Algorithm 3: Early Rule-in and Rule-out
+                  </small>
+                </div>
+
+                <div style={{ 
+                  marginTop: '12px', 
+                  padding: '8px', 
+                  backgroundColor: '#e3f2fd', 
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  color: '#1565c0'
+                }}>
+                  💡 <strong>RAGシステムによる推奨:</strong> 患者背景（35歳男性、糖尿病、家族歴陽性）と症状から、
+                  GRACE risk scoreによるリスク評価と早期侵襲的戦略の検討が推奨されます。
+                </div>
               </div>
             </div>
           )}

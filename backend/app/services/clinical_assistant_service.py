@@ -44,8 +44,8 @@ class ClinicalValidation:
 
 
 class ClinicalAssistantService:
-    """Azure OpenAI APIを使用したリアルタイム診療支援サービス"""
-    
+    """Cerebras API + Azure OpenAIを使用したリアルタイム診療支援サービス"""
+
     def __init__(self):
         self.ai_service = AIAssistantService()
         self.pii_service = EnhancedPIIService()
@@ -53,9 +53,9 @@ class ClinicalAssistantService:
     
     async def generate_patient_summary(self, clinical_data: Dict[str, Any]) -> PatientSituation:
         """
-        S&Oから患者状況の自動要約生成
+        S&Oから患者状況の自動要約生成（アンサンブル診断システム使用）
 
-        3つの異なるLLM（Qwen 3 235B Instruct, Llama 3.3 70B, OpenAI GPT OSS）を使用し、
+        3つの異なるLLM（Llama 3.1 8B, Llama 3.3 70B, Azure GPT-5）を使用し、
         Qwen 3 235B Thinkingで最終診断を統合するアンサンブル診断システム
 
         Args:
@@ -73,8 +73,8 @@ class ClinicalAssistantService:
         try:
             # Cerebrasサービスが利用可能かチェック
             if not self.cerebras_service.client:
-                logger.warning("Cerebras service not available, falling back to Azure OpenAI")
-                return await self._generate_patient_summary_fallback(clinical_data)
+                logger.warning("Cerebras service not available")
+                raise Exception("Cerebras service not available")
 
             # 入力データの安全性チェック
             safe_data = await self._sanitize_clinical_data(clinical_data)
@@ -125,70 +125,17 @@ class ClinicalAssistantService:
 
         except Exception as e:
             logger.error(f"Patient summary generation error: {e}")
-            # エラー時はAzure OpenAIにフォールバック
-            try:
-                logger.info("Attempting fallback to Azure OpenAI")
-                return await self._generate_patient_summary_fallback(clinical_data)
-            except Exception as fallback_error:
-                logger.error(f"Fallback also failed: {fallback_error}")
-                # 最終的なフォールバック
-                return PatientSituation(
-                    summary="自動要約の生成に失敗しました。手動での状況整理をお願いします。",
-                    key_findings=[],
-                    differential_diagnoses=[],
-                    risk_factors=[],
-                    recommendations=["医師による詳細な評価が必要です"],
-                    confidence_score=0.0,
-                    generated_at=datetime.now()
-                )
-
-    async def _generate_patient_summary_fallback(self, clinical_data: Dict[str, Any]) -> PatientSituation:
-        """
-        Azure OpenAIを使用したフォールバック診断生成
-
-        Args:
-            clinical_data: 臨床データ
-
-        Returns:
-            PatientSituation: 診断結果
-        """
-        if not self.ai_service.azure_client:
-            raise Exception("Azure OpenAI client not available")
-
-        # 入力データの安全性チェック
-        safe_data = await self._sanitize_clinical_data(clinical_data)
-
-        # 患者状況整理プロンプトの生成
-        prompt = self._create_patient_summary_prompt(safe_data)
-
-        messages = [
-            {"role": "system", "content": "あなたは経験豊富な臨床医です。患者の現在の状況を的確に整理し、適切な医学的判断を支援してください。"},
-            {"role": "user", "content": prompt}
-        ]
-
-        response = self.ai_service.azure_client.chat.completions.create(
-            model=self.ai_service.deployment_name,
-            messages=messages,
-            max_tokens=1200,
-            temperature=0.2
-        )
-
-        content = response.choices[0].message.content
-
-        # JSON解析と構造化
-        result = json.loads(content)
-
-        situation = PatientSituation(
-            summary=result.get("summary", ""),
-            key_findings=result.get("key_findings", []),
-            differential_diagnoses=result.get("differential_diagnoses", []),
-            risk_factors=result.get("risk_factors", []),
-            recommendations=result.get("recommendations", []),
-            confidence_score=float(result.get("confidence_score", 0.0)),
-            generated_at=datetime.now()
-        )
-
-        return situation
+            # エラー時はフォールバック
+            return PatientSituation(
+                summary="自動要約の生成に失敗しました。手動での状況整理をお願いします。",
+                key_findings=[],
+                differential_diagnoses=[],
+                risk_factors=[],
+                recommendations=["医師による詳細な評価が必要です"],
+                confidence_score=0.0,
+                generated_at=datetime.now(),
+                is_ensemble=False
+            )
     
     def _create_patient_summary_prompt(self, clinical_data: Dict[str, Any]) -> str:
         """患者状況整理用のプロンプトを生成"""
@@ -267,8 +214,7 @@ class ClinicalAssistantService:
     async def validate_clinical_reasoning(self, 
                                         patient_summary: str, 
                                         assessment: str, 
-                                        plan: str,
-                                        diagnosis_codes: List[str] = None) -> ClinicalValidation:
+                                        plan: str) -> ClinicalValidation:
         """
         A&Pの医学的妥当性チェック
         
@@ -276,14 +222,13 @@ class ClinicalAssistantService:
             patient_summary: AI生成の患者状況整理
             assessment: 医師入力のAssessment
             plan: 医師入力のPlan
-            diagnosis_codes: 診断コードリスト
             
         Returns:
             ClinicalValidation: 整合性チェック結果
         """
         try:
-            if not self.ai_service.azure_client:
-                raise Exception("Azure OpenAI client not available")
+            if not self.ai_service.cerebras_client:
+                raise Exception("Cerebras client not available")
             
             # 入力データの安全性チェック
             safe_summary = await self._sanitize_text(patient_summary)
@@ -292,7 +237,7 @@ class ClinicalAssistantService:
             
             # 整合性チェックプロンプトの生成
             prompt = self._create_validation_prompt(
-                safe_summary, safe_assessment, safe_plan, diagnosis_codes or []
+                safe_summary, safe_assessment, safe_plan
             )
             
             messages = [
@@ -300,8 +245,8 @@ class ClinicalAssistantService:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.ai_service.azure_client.chat.completions.create(
-                model=self.ai_service.deployment_name,
+            response = self.ai_service.cerebras_client.chat.completions.create(
+                model=self.ai_service.cerebras_model_name,
                 messages=messages,
                 max_tokens=1000,
                 temperature=0.1
@@ -332,12 +277,9 @@ class ClinicalAssistantService:
                 validation_summary="自動検証に失敗しました"
             )
     
-    def _create_validation_prompt(self, summary: str, assessment: str, plan: str, diagnosis_codes: List[str]) -> str:
+    def _create_validation_prompt(self, summary: str, assessment: str, plan: str) -> str:
         """A&P整合性チェック用プロンプトを生成"""
         
-        codes_text = ""
-        if diagnosis_codes:
-            codes_text = f"診断コード: {', '.join(diagnosis_codes)}"
         
         return f"""
 以下の臨床情報の整合性を評価してください。
@@ -351,14 +293,12 @@ class ClinicalAssistantService:
 【医師入力のPlan（計画）】:
 {plan}
 
-{codes_text}
 
 【評価観点】:
 1. 状況整理とAssessmentの整合性
 2. AssessmentとPlanの論理的整合性
-3. 診断コードとAssessmentの適合性
-4. Planの医学的妥当性
-5. 重要な見落としの有無
+3. Planの医学的妥当性
+4. 重要な見落としの有無
 
 【出力形式】:
 {{
@@ -366,10 +306,10 @@ class ClinicalAssistantService:
     "consistency_score": 0.0から1.0,
     "inconsistencies": [
         {{
-            "type": "diagnosis_mismatch|treatment_inappropriate|missing_consideration",
+            "type": "treatment_inappropriate|missing_consideration|logic_error",
             "description": "不整合の詳細",
             "severity": "low|medium|high|critical",
-            "location": "assessment|plan|diagnosis_code"
+            "location": "assessment|plan"
         }}
     ],
     "suggestions": [
@@ -443,8 +383,8 @@ class ClinicalAssistantService:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.ai_service.azure_client.chat.completions.create(
-                model=self.ai_service.deployment_name,
+            response = self.ai_service.cerebras_client.chat.completions.create(
+                model=self.ai_service.cerebras_model_name,
                 messages=messages,
                 max_tokens=800,
                 temperature=0.3

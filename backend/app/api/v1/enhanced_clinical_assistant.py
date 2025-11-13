@@ -44,8 +44,7 @@ class EnhancedPIIRequest(BaseModel):
 
 @router.post("/generate-patient-summary")
 async def generate_patient_summary(
-    request: ClinicalDataRequest,
-    current_user: User = Depends(get_current_user)
+    request: ClinicalDataRequest
 ):
     """
     リアルタイム患者状況整理生成
@@ -66,7 +65,7 @@ async def generate_patient_summary(
         })
         
         # ログ記録
-        logger.info(f"Patient summary generated for user {current_user.id}")
+        logger.info(f"Patient summary generated")
         
         # 基本レスポンス
         response_data = {

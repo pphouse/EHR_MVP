@@ -1,7 +1,7 @@
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database with pgvector
   postgres:
-    image: postgres:15-alpine
+    image: ankane/pgvector:pg15
     container_name: ehr_postgres
     environment:
       POSTGRES_DB: ehr_mvp
