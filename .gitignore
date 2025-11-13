@@ -13,6 +13,10 @@ backend/backend.log
 e2e-tests/playwright-report/
 e2e-tests/test-results/
 e2e-tests/*.png
+test_mock_ensemble_result.json
+test_cerebras_models.py
+test_cerebras_simple.py
+test_updated_models.py
 
 # Node.js
 node_modules/
