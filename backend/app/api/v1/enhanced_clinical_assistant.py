@@ -77,20 +77,18 @@ async def generate_patient_summary(
                 "risk_factors": situation.risk_factors,
                 "recommendations": situation.recommendations,
                 "confidence_score": situation.confidence_score,
-                "generated_at": situation.generated_at.isoformat()
+                "generated_at": situation.generated_at.isoformat(),
+                # アンサンブル診断情報を含める
+                "is_ensemble": situation.is_ensemble,
+                "consensus_level": situation.consensus_level,
+                "individual_model_results": situation.individual_model_results,
+                "synthesis_reasoning": situation.synthesis_reasoning
             },
             "usage_note": "この要約は医学的判断の補助として提供されています。最終的な診断・治療方針は医師の判断に基づいてください。"
         }
 
         # アンサンブル診断の追加情報
         if situation.is_ensemble:
-            response_data["ensemble_info"] = {
-                "is_ensemble": True,
-                "consensus_level": situation.consensus_level,
-                "synthesis_reasoning": situation.synthesis_reasoning,
-                "models_used": len(situation.individual_model_results) if situation.individual_model_results else 0,
-                "individual_results": situation.individual_model_results
-            }
             response_data["usage_note"] += " この診断は3つの異なるAIモデルの結果を統合したアンサンブル診断です。"
 
         return response_data

@@ -37,7 +37,6 @@ import { useNotificationSound } from '../hooks/useNotificationSound';
 import RealTimeClinicalSummary from '../components/RealTimeClinicalSummary';
 import ClinicalValidationChecker from '../components/ClinicalValidationChecker';
 import EnhancedPIIChecker from '../components/EnhancedPIIChecker';
-import RAGQueryInterface from '../components/RAGQueryInterface';
 
 const steps = ['基本情報', 'バイタルサイン', 'SOAP記録'];
 
@@ -720,13 +719,6 @@ const EncounterCreate = () => {
               )}
             </Box>
           </Box>
-        </CardContent>
-      </Card>
-
-      {/* RAG検索インターフェース */}
-      <Card sx={{ mt: 3 }}>
-        <CardContent>
-          <RAGQueryInterface />
         </CardContent>
       </Card>
 

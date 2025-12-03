@@ -52,7 +52,7 @@ class CerebrasService:
     AZURE_GPT5 = "azure-gpt-5"            # Azure OpenAI GPT-5
 
     # Thinking用の最高性能モデル
-    THINKING_MODEL = "qwen-3-235b-a22b-thinking-2507"  # 最終診断統合用
+    THINKING_MODEL = "qwen-3-235b-a22b-instruct-2507"  # 最終診断統合用
 
     def __init__(self):
         """Cerebras APIとAzure OpenAIクライアントの初期化"""
