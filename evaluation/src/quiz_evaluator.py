@@ -7,6 +7,7 @@ import sys
 import csv
 import json
 import asyncio
+import logging
 from typing import List, Dict, Any, Tuple
 from datetime import datetime
 from cerebras.cloud.sdk import Cerebras
@@ -14,6 +15,30 @@ from openai import OpenAI
 
 # プロジェクトルートをパスに追加
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../backend'))
+
+# ログ設定
+def setup_logger(log_file: str):
+    """ログ設定 - コンソールとファイルの両方に出力"""
+    logger = logging.getLogger('quiz_evaluator')
+    logger.setLevel(logging.INFO)
+
+    # ファイルハンドラ
+    file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
+    file_handler.setLevel(logging.INFO)
+
+    # コンソールハンドラ
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+
+    # フォーマット
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    return logger
 
 
 class QuizEvaluator:
@@ -25,14 +50,22 @@ class QuizEvaluator:
     AZURE_GPT5 = "azure-gpt-5"
     QWEN_INSTRUCT = "qwen-3-235b-a22b-instruct-2507"
 
-    def __init__(self):
+    # レート制限対策の待機時間（秒）
+    SLEEP_BETWEEN_QUESTIONS = 3  # 各問題の後
+    SLEEP_BETWEEN_MODELS = 1     # 各モデルの後
+    SLEEP_AFTER_ENSEMBLE = 2     # アンサンブル評価の後
+
+    def __init__(self, logger=None):
         """初期化"""
+        self.logger = logger or logging.getLogger('quiz_evaluator')
+
         # Cerebras APIクライアント
         cerebras_api_key = os.getenv("CEREBRAS_API_KEY")
         if not cerebras_api_key:
             raise ValueError("CEREBRAS_API_KEY not found")
 
         self.cerebras_client = Cerebras(api_key=cerebras_api_key)
+        self.logger.info("Cerebras client initialized")
 
         # Azure OpenAI クライアント
         azure_api_key = os.getenv("AZURE_OPENAI_API_KEY")
@@ -43,9 +76,10 @@ class QuizEvaluator:
                 azure_endpoint += '/'
             base_url = f"{azure_endpoint}openai/v1/"
             self.azure_client = OpenAI(api_key=azure_api_key, base_url=base_url)
+            self.logger.info("Azure OpenAI client initialized")
         else:
             self.azure_client = None
-            print("Warning: Azure OpenAI not configured")
+            self.logger.warning("Azure OpenAI not configured")
 
     def load_quiz_data(self, csv_path: str) -> List[Dict[str, Any]]:
         """CSVからクイズデータを読み込み"""
@@ -92,8 +126,11 @@ class QuizEvaluator:
         prompt = self.create_prompt(quiz)
 
         try:
+            self.logger.info(f"  Requesting {model_name}...")
+
             if model_name == self.AZURE_GPT5:
                 if not self.azure_client:
+                    self.logger.warning(f"  {model_name}: Azure client not configured")
                     return {'model': model_name, 'answer': None, 'raw_response': None, 'error': 'Azure client not configured'}
 
                 response = self.azure_client.chat.completions.create(
@@ -115,6 +152,10 @@ class QuizEvaluator:
 
             # 回答から数字を抽出
             answer = self._extract_answer(raw_response)
+            self.logger.info(f"  {model_name}: Answer={answer}")
+
+            # レート制限対策
+            await asyncio.sleep(self.SLEEP_BETWEEN_MODELS)
 
             return {
                 'model': model_name,
@@ -124,6 +165,7 @@ class QuizEvaluator:
             }
 
         except Exception as e:
+            self.logger.error(f"  {model_name}: Error - {str(e)}")
             return {
                 'model': model_name,
                 'answer': None,
@@ -155,7 +197,7 @@ class QuizEvaluator:
         results = {model: {'correct': 0, 'total': 0, 'answers': []} for model in models}
 
         for i, quiz in enumerate(quiz_data):
-            print(f"[単一モデル] 問題 {i+1}/{len(quiz_data)}: {quiz['id']}")
+            self.logger.info(f"[単一モデル] 問題 {i+1}/{len(quiz_data)}: {quiz['id']}")
 
             for model in models:
                 response = await self.ask_single_model(model, quiz)
@@ -175,10 +217,11 @@ class QuizEvaluator:
                     'error': response['error']
                 })
 
-                print(f"  {model}: {response['answer']} (正解: {quiz['correct_answer']}) - {'○' if is_correct else '×'}")
+                self.logger.info(f"  {model}: {response['answer']} (正解: {quiz['correct_answer']}) - {'○' if is_correct else '×'}")
 
-            # レート制限対策
-            await asyncio.sleep(1)
+            # レート制限対策 - 問題ごとに待機
+            self.logger.info(f"  Sleeping {self.SLEEP_BETWEEN_QUESTIONS}s to avoid rate limits...")
+            await asyncio.sleep(self.SLEEP_BETWEEN_QUESTIONS)
 
         # 精度計算
         for model in models:
@@ -280,14 +323,14 @@ class QuizEvaluator:
                 }
             else:
                 # JSONパースに失敗した場合は多数決
-                print(f"  ⚠️  Qwen JSON parse failed, falling back to majority vote")
+                self.logger.warning(f"  ⚠️  Qwen JSON parse failed, falling back to majority vote")
                 fallback_result = self._majority_vote(responses)
                 fallback_result['fallback'] = True
                 fallback_result['fallback_reason'] = 'JSON parse failed'
                 return fallback_result
 
         except Exception as e:
-            print(f"  ⚠️  Qwen synthesis error: {e}, falling back to majority vote")
+            self.logger.error(f"  ⚠️  Qwen synthesis error: {e}, falling back to majority vote")
             # エラー時は多数決にフォールバック
             fallback_result = self._majority_vote(responses)
             fallback_result['fallback'] = True
@@ -316,7 +359,7 @@ class QuizEvaluator:
         results = {'correct': 0, 'total': 0, 'answers': []}
 
         for i, quiz in enumerate(quiz_data):
-            print(f"[アンサンブル] 問題 {i+1}/{len(quiz_data)}: {quiz['id']}")
+            self.logger.info(f"[アンサンブル] 問題 {i+1}/{len(quiz_data)}: {quiz['id']}")
 
             response = await self.ask_ensemble(quiz)
 
@@ -341,10 +384,11 @@ class QuizEvaluator:
             })
 
             fallback_indicator = " [多数決フォールバック]" if response.get('fallback') else ""
-            print(f"  アンサンブル: {response['final_answer']} (正解: {quiz['correct_answer']}, 信頼度: {response['confidence']:.2f}) - {'○' if is_correct else '×'}{fallback_indicator}")
+            self.logger.info(f"  アンサンブル: {response['final_answer']} (正解: {quiz['correct_answer']}, 信頼度: {response['confidence']:.2f}) - {'○' if is_correct else '×'}{fallback_indicator}")
 
             # レート制限対策
-            await asyncio.sleep(2)
+            self.logger.info(f"  Sleeping {self.SLEEP_AFTER_ENSEMBLE}s...")
+            await asyncio.sleep(self.SLEEP_AFTER_ENSEMBLE)
 
         results['accuracy'] = results['correct'] / results['total'] if results['total'] > 0 else 0
 
@@ -392,44 +436,44 @@ class QuizEvaluator:
         return output_path, summary_path
 
 
-async def evaluate_single_csv(evaluator: 'QuizEvaluator', csv_path: str, output_dir: str) -> Dict[str, Any]:
+async def evaluate_single_csv(evaluator: 'QuizEvaluator', csv_path: str, output_dir: str, logger) -> Dict[str, Any]:
     """単一のCSVファイルを評価"""
     csv_name = os.path.basename(csv_path).replace('.csv', '')
 
-    print("\n" + "=" * 70)
-    print(f"📊 データセット: {csv_name}")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info(f"📊 データセット: {csv_name}")
+    logger.info("=" * 70)
 
     # クイズデータ読み込み
     quiz_data = evaluator.load_quiz_data(csv_path)
-    print(f"クイズデータ読み込み完了: {len(quiz_data)} 問\n")
+    logger.info(f"クイズデータ読み込み完了: {len(quiz_data)} 問\n")
 
     # 単一モデル評価
-    print("=" * 60)
-    print("単一モデルでの評価を開始します")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("単一モデルでの評価を開始します")
+    logger.info("=" * 60)
     single_results = await evaluator.evaluate_single_models(quiz_data)
 
-    print("\n" + "=" * 60)
-    print("単一モデル評価結果")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("単一モデル評価結果")
+    logger.info("=" * 60)
     for model, result in single_results.items():
-        print(f"{model}: {result['correct']}/{result['total']} 問正解 (正答率: {result['accuracy']*100:.1f}%)")
+        logger.info(f"{model}: {result['correct']}/{result['total']} 問正解 (正答率: {result['accuracy']*100:.1f}%)")
 
     # アンサンブル評価
-    print("\n" + "=" * 60)
-    print("アンサンブルモデルでの評価を開始します")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("アンサンブルモデルでの評価を開始します")
+    logger.info("=" * 60)
     ensemble_results = await evaluator.evaluate_ensemble(quiz_data)
 
-    print("\n" + "=" * 60)
-    print("アンサンブル評価結果")
-    print("=" * 60)
-    print(f"アンサンブル: {ensemble_results['correct']}/{ensemble_results['total']} 問正解 (正答率: {ensemble_results['accuracy']*100:.1f}%)")
+    logger.info("\n" + "=" * 60)
+    logger.info("アンサンブル評価結果")
+    logger.info("=" * 60)
+    logger.info(f"アンサンブル: {ensemble_results['correct']}/{ensemble_results['total']} 問正解 (正答率: {ensemble_results['accuracy']*100:.1f}%)")
 
     # フォールバック統計
     fallback_count = sum(1 for ans in ensemble_results['answers'] if ans.get('fallback'))
-    print(f"多数決フォールバック回数: {fallback_count}/{ensemble_results['total']} 問")
+    logger.info(f"多数決フォールバック回数: {fallback_count}/{ensemble_results['total']} 問")
 
     # 結果保存
     evaluator.save_results(single_results, ensemble_results, output_dir, dataset_name=csv_name)
@@ -437,7 +481,7 @@ async def evaluate_single_csv(evaluator: 'QuizEvaluator', csv_path: str, output_
     # 改善率の表示
     best_single = max(single_results.values(), key=lambda x: x['accuracy'])
     improvement = (ensemble_results['accuracy'] - best_single['accuracy']) * 100
-    print(f"\n改善率: 最良単一モデル比 {improvement:+.1f} ポイント")
+    logger.info(f"\n改善率: 最良単一モデル比 {improvement:+.1f} ポイント")
 
     return {
         'dataset_name': csv_name,
@@ -454,24 +498,35 @@ async def main():
     from dotenv import load_dotenv
     load_dotenv('/Users/naoto/EHR_MVP/.env')
 
-    # 評価システム初期化
-    evaluator = QuizEvaluator()
-
-    # データディレクトリから全CSVファイルを取得
-    data_dir = '/Users/naoto/EHR_MVP/evaluation/data'
-    csv_files = [f for f in os.listdir(data_dir) if f.endswith('.csv')]
-
-    if not csv_files:
-        print("エラー: データディレクトリにCSVファイルが見つかりません")
-        return
-
-    print(f"📁 検出されたデータセット: {len(csv_files)} 件")
-    for csv_file in csv_files:
-        print(f"  - {csv_file}")
-
     # 結果保存ディレクトリ
     output_dir = '/Users/naoto/EHR_MVP/evaluation/results'
     os.makedirs(output_dir, exist_ok=True)
+
+    # ログファイルのパス
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = os.path.join(output_dir, f'evaluation_{timestamp}.log')
+
+    # ログ設定
+    logger = setup_logger(log_file)
+    logger.info("=" * 70)
+    logger.info("循環器ガイドライン4択クイズ 評価システム起動")
+    logger.info("=" * 70)
+    logger.info(f"ログファイル: {log_file}")
+
+    # 評価システム初期化
+    evaluator = QuizEvaluator(logger=logger)
+
+    # データディレクトリから全CSVファイルを取得
+    data_dir = '/Users/naoto/EHR_MVP/evaluation/data'
+    csv_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.csv')])
+
+    if not csv_files:
+        logger.error("エラー: データディレクトリにCSVファイルが見つかりません")
+        return
+
+    logger.info(f"📁 検出されたデータセット: {len(csv_files)} 件")
+    for csv_file in csv_files:
+        logger.info(f"  - {csv_file}")
 
     # 全データセットの評価結果を格納
     all_results = []
@@ -479,22 +534,21 @@ async def main():
     # 各CSVファイルを順次評価
     for csv_file in csv_files:
         csv_path = os.path.join(data_dir, csv_file)
-        result = await evaluate_single_csv(evaluator, csv_path, output_dir)
+        result = await evaluate_single_csv(evaluator, csv_path, output_dir, logger)
         all_results.append(result)
 
     # 統合サマリーを生成
-    print("\n" + "=" * 70)
-    print("📈 全データセット統合結果")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("📈 全データセット統合結果")
+    logger.info("=" * 70)
 
     for result in all_results:
-        print(f"\n【{result['dataset_name']}】")
+        logger.info(f"\n【{result['dataset_name']}】")
         for model, res in result['single_results'].items():
-            print(f"  {model}: {res['accuracy']*100:.1f}%")
-        print(f"  アンサンブル: {result['ensemble_results']['accuracy']*100:.1f}% (改善: {result['improvement']:+.1f}pt, フォールバック: {result['fallback_count']}回)")
+            logger.info(f"  {model}: {res['accuracy']*100:.1f}%")
+        logger.info(f"  アンサンブル: {result['ensemble_results']['accuracy']*100:.1f}% (改善: {result['improvement']:+.1f}pt, フォールバック: {result['fallback_count']}回)")
 
     # 全データセット統合サマリーをテキスト保存
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     integrated_summary_path = os.path.join(output_dir, f'integrated_summary_{timestamp}.txt')
 
     with open(integrated_summary_path, 'w', encoding='utf-8') as f:
@@ -513,7 +567,11 @@ async def main():
             f.write(f"  改善率: {result['improvement']:+.1f} ポイント\n")
             f.write(f"  多数決フォールバック: {result['fallback_count']} 回\n\n")
 
-    print(f"\n✅ 統合サマリー保存: {integrated_summary_path}")
+    logger.info(f"\n✅ 統合サマリー保存: {integrated_summary_path}")
+    logger.info(f"✅ ログファイル: {log_file}")
+    logger.info("\n" + "=" * 70)
+    logger.info("評価完了!")
+    logger.info("=" * 70)
 
 
 if __name__ == "__main__":
