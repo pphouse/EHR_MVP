@@ -136,7 +136,7 @@ class QuizEvaluator:
                 response = self.azure_client.chat.completions.create(
                     model="azure-gpt-5",
                     messages=[{"role": "user", "content": prompt}],
-                    max_completion_tokens=100
+                    max_completion_tokens=2000  # GPT-5はreasoning tokens用に大きな値が必要
                     # GPT-5はtemperature=1.0のみサポート（デフォルト）
                 )
                 raw_response = response.choices[0].message.content
