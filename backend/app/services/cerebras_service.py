@@ -9,6 +9,7 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 import logging
 from openai import OpenAI
+from ..core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ class CerebrasService:
 
     # Cerebrasで利用可能なモデル (2025年最新)
     # 検証済みのモデル名を使用
-    LLAMA_31_8B = "llama3.1-8b"           # 高速・軽量モデル
+    GPT_OSS = "gpt-oss-120b"              # GPT-OSS 120B
     LLAMA_33_70B = "llama-3.3-70b"        # 最新の70Bモデル
 
     # Azure OpenAI GPT-5
@@ -56,7 +57,7 @@ class CerebrasService:
 
     def __init__(self):
         """Cerebras APIとAzure OpenAIクライアントの初期化"""
-        self.api_key = os.getenv("CEREBRAS_API_KEY")
+        self.api_key = settings.cerebras_api_key
 
         if not self.api_key:
             logger.warning("CEREBRAS_API_KEY not found in environment variables")
@@ -66,7 +67,7 @@ class CerebrasService:
                 # Cerebrasは OpenAI互換のAPIを提供
                 self.client = OpenAI(
                     api_key=self.api_key,
-                    base_url="https://api.cerebras.ai/v1"
+                    base_url=settings.cerebras_api_url
                 )
                 logger.info("Cerebras API client initialized successfully")
             except Exception as e:
@@ -75,8 +76,8 @@ class CerebrasService:
 
         # Azure OpenAI クライアントの初期化（v1 API）
         self.azure_client = None
-        azure_api_key = os.getenv("AZURE_OPENAI_API_KEY")
-        azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        azure_api_key = settings.azure_openai_api_key
+        azure_endpoint = settings.azure_openai_endpoint
 
         if azure_api_key and azure_endpoint:
             try:
@@ -231,7 +232,7 @@ class CerebrasService:
 
         tasks = [
             self.generate_diagnosis_with_model(
-                self.LLAMA_31_8B,
+                self.GPT_OSS,
                 diagnosis_prompt,
                 system_prompt
             ),
